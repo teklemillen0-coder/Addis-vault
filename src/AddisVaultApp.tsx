@@ -551,13 +551,8 @@ export default function App() {
     }
   }, [expediterRequests]);
 
-  // Register PWA Service Worker & load owner catalog overrides on mount
+  // Load owner catalog overrides on mount
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
-        console.error("Addis-Vault service worker registration failed.", error);
-      });
-    }
     void reloadCatalogChanges();
   }, []);
 

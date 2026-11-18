@@ -10,7 +10,46 @@ import {
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
+import { AppErrorBoundary } from "../components/AppErrorBoundary";
 import appCss from "../styles.css?url";
+
+const SERVICE_WORKER_CLEANUP_SCRIPT = `try {
+  if ("serviceWorker" in navigator) {
+    var reloadKey = "addisvault_sw_cleanup_reload";
+    var wasControlled = !!navigator.serviceWorker.controller;
+    var unregister = navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      return Promise.all(registrations.map(function (registration) {
+        return registration.unregister();
+      }));
+    });
+    var clearCaches = "caches" in window
+      ? window.caches.keys().then(function (keys) {
+          return Promise.all(keys.filter(function (name) {
+            return name.startsWith("addisvault-");
+          }).map(function (name) {
+            return window.caches.delete(name);
+          }));
+        })
+      : Promise.resolve();
+    Promise.all([unregister, clearCaches]).then(function () {
+      if (!wasControlled) return;
+      try {
+        if (sessionStorage.getItem(reloadKey)) {
+          sessionStorage.removeItem(reloadKey);
+          return;
+        }
+        sessionStorage.setItem(reloadKey, "1");
+        window.location.reload();
+      } catch (error) {
+        console.warn("Could not reload after clearing the old service worker.", error);
+      }
+    }).catch(function (error) {
+      console.warn("Could not clear the old service worker.", error);
+    });
+  }
+} catch (error) {
+  console.warn("Could not access service workers.", error);
+}`;
 
 function NotFoundComponent() {
   return (
@@ -108,6 +147,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        children: SERVICE_WORKER_CLEANUP_SCRIPT,
+      },
+      {
         // Apply the saved light/dark theme before first paint (same behaviour as the original app).
         children:
           "try{var t=localStorage.getItem('addisvault_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}",
@@ -138,9 +180,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
