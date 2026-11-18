@@ -1,18 +1,19 @@
-import React, { useMemo, useState } from 'react';
-import { GraduationCap, Search } from 'lucide-react';
-import { DigitalProduct, Language } from '../types';
-import { EXTRA_T, fmt } from '../i18n/extraTranslations';
-import { UI_TRANSLATIONS } from '../i18n/translations';
+import React, { useMemo, useState } from "react";
+import { GraduationCap, Search } from "lucide-react";
+import { DigitalProduct, Language } from "../types";
+import { EXTRA_T, fmt } from "../i18n/extraTranslations";
+import { UI_TRANSLATIONS } from "../i18n/translations";
 import {
   UNIVERSITY_DEPARTMENTS,
   UNIVERSITY_YEARS,
   UNIVERSITY_YEAR_LABELS,
-} from '../data/generatedCatalog';
+} from "../data/generatedCatalog";
 import {
   UNIVERSITY_COURSE_YEAR_LABELS,
   UNIVERSITY_COURSE_YEARS,
-} from '../data/universityCourseOptions';
-import { ProductCard } from './ProductCard';
+} from "../data/universityCourseOptions";
+import { matchesUniversityType, UniversityTypeFilter } from "../utils/universityFilters";
+import { ProductCard } from "./ProductCard";
 
 interface UniversityHubViewProps {
   lang: Language;
@@ -43,10 +44,11 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
 }) => {
   const x = EXTRA_T[lang];
   const t = UI_TRANSLATIONS[lang];
-  const [year, setYear] = useState<string>('all');
-  const [dept, setDept] = useState<string>('all');
-  const [course, setCourse] = useState<string>('all');
-  const [query, setQuery] = useState('');
+  const [year, setYear] = useState<string>("all");
+  const [dept, setDept] = useState<string>("all");
+  const [course, setCourse] = useState<string>("all");
+  const [contentType, setContentType] = useState<UniversityTypeFilter>("all");
+  const [query, setQuery] = useState("");
   const [visible, setVisible] = useState(PAGE);
 
   const years = useMemo(() => {
@@ -54,9 +56,9 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
       (candidate) => !UNIVERSITY_YEARS.includes(candidate as (typeof UNIVERSITY_YEARS)[number]),
     );
     return [
-      ...UNIVERSITY_YEARS.filter((candidate) => candidate !== 'National Exit Exam'),
+      ...UNIVERSITY_YEARS.filter((candidate) => candidate !== "National Exit Exam"),
       ...additionalYears,
-      'National Exit Exam',
+      "National Exit Exam",
     ];
   }, []);
 
@@ -67,31 +69,33 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
           products
             .filter(
               (product) =>
-                (year === 'all' || product.uniYear === year) &&
-                (dept === 'all' || product.department === dept) &&
+                (year === "all" || product.uniYear === year) &&
+                (dept === "all" || product.department === dept) &&
+                matchesUniversityType(product, contentType) &&
                 Boolean(product.subject),
             )
             .flatMap((product) => (product.subject ? [product.subject] : []))
             .sort((a, b) => a.localeCompare(b)),
         ),
       ),
-    [products, year, dept],
+    [products, year, dept, contentType],
   );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return products.filter((p) => {
-      if (year !== 'all' && p.uniYear !== year) return false;
-      if (dept !== 'all' && p.department !== dept) return false;
-      if (course !== 'all' && p.subject !== course) return false;
+      if (year !== "all" && p.uniYear !== year) return false;
+      if (dept !== "all" && p.department !== dept) return false;
+      if (course !== "all" && p.subject !== course) return false;
+      if (!matchesUniversityType(p, contentType)) return false;
       if (!q) return true;
       return (
         p.title[lang].toLowerCase().includes(q) ||
         p.title.en.toLowerCase().includes(q) ||
-        (p.subject || '').toLowerCase().includes(q)
+        (p.subject || "").toLowerCase().includes(q)
       );
     });
-  }, [products, year, dept, course, query, lang]);
+  }, [products, year, dept, course, contentType, query, lang]);
 
   const yearLabel = (value: string) => {
     const labels =
@@ -103,8 +107,8 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
   const chip = (active: boolean) =>
     `min-h-[38px] whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
       active
-        ? 'bg-emerald-700 text-white dark:bg-emerald-600'
-        : 'border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-300'
+        ? "bg-emerald-700 text-white dark:bg-emerald-600"
+        : "border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-300"
     }`;
 
   return (
@@ -125,15 +129,44 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
         <div className="mt-4 space-y-3">
           <div>
             <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-300">
+              ዓይነት / Type
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {(
+                [
+                  ["all", "ሁሉም / All"],
+                  ["exams", "ፈተና ብቻ / Exams Only (Mid, Final & Exit)"],
+                  ["modules", "ኮርስ / ሞጁል ብቻ / Modules Only"],
+                  ["bundles", "ሙሉ ጥቅል / Course + Exam Bundle"],
+                ] as const
+              ).map(([type, label]) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={chip(contentType === type)}
+                  onClick={() => {
+                    setContentType(type);
+                    setCourse("all");
+                    setVisible(PAGE);
+                  }}
+                  aria-pressed={contentType === type}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-300">
               {x.uniYearLabel}
             </div>
             <div className="flex gap-1.5 overflow-x-auto pb-1">
               <button
                 type="button"
-                className={chip(year === 'all')}
+                className={chip(year === "all")}
                 onClick={() => {
-                  setYear('all');
-                  setCourse('all');
+                  setYear("all");
+                  setCourse("all");
                   setVisible(PAGE);
                 }}
               >
@@ -146,7 +179,7 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
                   className={chip(year === y)}
                   onClick={() => {
                     setYear(y);
-                    setCourse('all');
+                    setCourse("all");
                     setVisible(PAGE);
                   }}
                 >
@@ -162,10 +195,10 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
             <div className="flex gap-1.5 overflow-x-auto pb-1">
               <button
                 type="button"
-                className={chip(dept === 'all')}
+                className={chip(dept === "all")}
                 onClick={() => {
-                  setDept('all');
-                  setCourse('all');
+                  setDept("all");
+                  setCourse("all");
                   setVisible(PAGE);
                 }}
               >
@@ -178,7 +211,7 @@ export const UniversityHubView: React.FC<UniversityHubViewProps> = ({
                   className={chip(dept === d.id)}
                   onClick={() => {
                     setDept(d.id);
-                    setCourse('all');
+                    setCourse("all");
                     setVisible(PAGE);
                   }}
                 >

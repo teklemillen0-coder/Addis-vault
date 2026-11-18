@@ -5,6 +5,7 @@ import {
   UNIVERSITY_COURSE_YEARS,
 } from "@/data/universityCourseOptions";
 import { PRODUCTS } from "@/data/products";
+import { matchesUniversityType } from "@/utils/universityFilters";
 
 const ADDITION_PREFIX = "uni-coursepack-";
 const additions = GENERATED_UNIVERSITY_COURSE_OPTIONS;
@@ -35,9 +36,28 @@ describe("University Hub course resources", () => {
       expect(courses.size).toBe(7);
       for (const kinds of courses.values()) {
         expect(kinds).toHaveLength(3);
+        expect(kinds.has("Course Exam Bank")).toBe(true);
       }
     }
     expect(additions).toHaveLength(7 * 8 * 7 * 3);
+  });
+
+  it("filters standalone exams, modules, and bundles without treating legacy exam bundles as standalone exams", () => {
+    const exam = additions.find((product) => product.id.endsWith("-exam"))!;
+    const module = additions.find((product) => product.id.endsWith("-module"))!;
+    const bundle = additions.find((product) => product.id.endsWith("-bundle"))!;
+    const legacyBundle = PRODUCTS.find(
+      (product) =>
+        product.category === "university" && product.format.includes("Exam + Module Bundle"),
+    )!;
+
+    expect(matchesUniversityType(exam, "exams")).toBe(true);
+    expect(matchesUniversityType(exam, "modules")).toBe(false);
+    expect(matchesUniversityType(module, "modules")).toBe(true);
+    expect(matchesUniversityType(module, "exams")).toBe(false);
+    expect(matchesUniversityType(bundle, "bundles")).toBe(true);
+    expect(matchesUniversityType(legacyBundle, "bundles")).toBe(true);
+    expect(matchesUniversityType(legacyBundle, "exams")).toBe(false);
   });
 
   it("uses unique ids, free previews, and 50–500 ETB prices with bundle pricing above either standalone option", () => {
