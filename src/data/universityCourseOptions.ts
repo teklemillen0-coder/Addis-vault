@@ -1,4 +1,5 @@
 import type { DigitalProduct, Language, LocalizedText } from "../types";
+import { matchesUniversityType } from "../utils/universityFilters";
 
 const COURSE_YEARS = [
   "Freshman (1st Year)",
@@ -794,3 +795,75 @@ function buildCourseOptions(): DigitalProduct[] {
 export const GENERATED_UNIVERSITY_COURSE_OPTIONS = buildCourseOptions();
 export const UNIVERSITY_COURSE_YEARS = COURSE_YEARS;
 export const UNIVERSITY_COURSE_YEAR_LABELS = COURSE_YEAR_LABELS;
+
+type UniversityCourseProduct = DigitalProduct & {
+  department: string;
+  uniYear: string;
+  subject: string;
+};
+
+function hasUniversityCourseDetails(product: DigitalProduct): product is UniversityCourseProduct {
+  return Boolean(product.department && product.uniYear && product.subject);
+}
+
+export function createMissingUniversityExamOptions(catalog: DigitalProduct[]): DigitalProduct[] {
+  const courseKey = (product: UniversityCourseProduct) =>
+    `${product.department}|${product.uniYear}|${product.subject}`;
+  const examCourseKeys = new Set(
+    catalog
+      .filter(
+        (product): product is UniversityCourseProduct =>
+          product.category === "university" &&
+          hasUniversityCourseDetails(product) &&
+          matchesUniversityType(product, "exams"),
+      )
+      .map(courseKey),
+  );
+  const courses = new Map<string, UniversityCourseProduct>();
+  for (const product of catalog) {
+    if (product.category === "university" && hasUniversityCourseDetails(product)) {
+      courses.set(courseKey(product), product);
+    }
+  }
+
+  return [...courses.entries()]
+    .filter(([key]) => !examCourseKeys.has(key))
+    .map(([, source]) => {
+      const { department, uniYear, subject } = source;
+      const details = mapLanguage((lang) =>
+        lang === "am"
+          ? "ራሱን የቻለ የሚድና ፋይናል የልምምድ ፈተና ባንክ ከመልስ ማብራሪያዎች ጋር።"
+          : "Standalone midterm and final practice exam bank with worked answer explanations.",
+      );
+      return {
+        ...source,
+        id: `uni-coursepack-supplement-${courseSlug(department)}-${courseSlug(uniYear)}-${courseSlug(subject)}-exam`,
+        sku: `UCS-${courseSlug(department).toUpperCase()}-${courseSlug(uniYear).toUpperCase()}-${courseSlug(subject).toUpperCase()}-EXAM`,
+        examType: "Course Exam Bank",
+        format: "Standalone Midterm & Final Practice Exam Bank",
+        availableLanguages: source.availableLanguages ?? ["en", "am"],
+        priceEtb: Math.min(500, Math.max(50, source.priceEtb)),
+        title: mapLanguage((lang) =>
+          lang === "am"
+            ? `${subject} — የሚድና ፋይናል ፈተና ባንክ ብቻ`
+            : `${subject} — Midterm & Final Exam Bank Only`,
+        ),
+        description: mapLanguage(
+          (lang) => `${department} · ${uniYear} · ${subject}. ${details[lang]}`,
+        ),
+        highlights: mapLanguageValues((lang) =>
+          lang === "am"
+            ? ["ራሱን የቻለ የሚድተርምና ፋይናል ፈተና ባንክ", "የልምምድ ጥያቄዎችና የመልስ ማብራሪያዎች", "የኮርስ ሞጁል አልተካተተም"]
+            : [
+                "Standalone midterm and final practice exam bank",
+                "Practice questions with worked answer explanations",
+                "Course module is not included",
+              ],
+        ),
+        sampleExcerpt: mapLanguage(
+          () =>
+            `${subject} — Free preview: sample midterm and final question formats with an answer explanation.`,
+        ),
+      };
+    });
+}

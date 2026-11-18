@@ -8,6 +8,7 @@ import { PRODUCTS } from "@/data/products";
 import { matchesUniversityType } from "@/utils/universityFilters";
 
 const ADDITION_PREFIX = "uni-coursepack-";
+const SUPPLEMENT_PREFIX = "uni-coursepack-supplement-";
 const additions = GENERATED_UNIVERSITY_COURSE_OPTIONS;
 
 describe("University Hub course resources", () => {
@@ -40,6 +41,43 @@ describe("University Hub course resources", () => {
       }
     }
     expect(additions).toHaveLength(7 * 8 * 7 * 3);
+  });
+
+  it("has a standalone exam item for every University Hub course", () => {
+    const courseKeys = new Set(
+      PRODUCTS.filter(
+        (product) =>
+          product.category === "university" &&
+          product.department &&
+          product.uniYear &&
+          product.subject,
+      ).map((product) => `${product.department}|${product.uniYear}|${product.subject}`),
+    );
+    const examCourseKeys = new Set(
+      PRODUCTS.filter(
+        (product) =>
+          product.category === "university" &&
+          matchesUniversityType(product, "exams") &&
+          product.department &&
+          product.uniYear &&
+          product.subject,
+      ).map((product) => `${product.department}|${product.uniYear}|${product.subject}`),
+    );
+
+    expect([...courseKeys].filter((key) => !examCourseKeys.has(key))).toEqual([]);
+  });
+
+  it("adds standalone exam options for legacy courses without changing their existing products", () => {
+    const supplements = PRODUCTS.filter((product) => product.id.startsWith(SUPPLEMENT_PREFIX));
+    expect(supplements).toHaveLength(74);
+    expect(new Set(supplements.map((product) => product.id)).size).toBe(supplements.length);
+    expect(new Set(supplements.map((product) => product.sku)).size).toBe(supplements.length);
+    for (const product of supplements) {
+      expect(product.examType).toBe("Course Exam Bank");
+      expect(product.format).toContain("Standalone");
+      expect(product.priceEtb).toBeGreaterThanOrEqual(50);
+      expect(product.priceEtb).toBeLessThanOrEqual(500);
+    }
   });
 
   it("filters standalone exams, modules, and bundles without treating legacy exam bundles as standalone exams", () => {
@@ -83,12 +121,17 @@ describe("University Hub course resources", () => {
   });
 
   it("appends new offers without changing legacy University Hub items or their price band", () => {
-    const newIds = new Set(additions.map((product) => product.id));
+    const newIds = new Set([
+      ...additions.map((product) => product.id),
+      ...PRODUCTS.filter((product) => product.id.startsWith(SUPPLEMENT_PREFIX)).map(
+        (product) => product.id,
+      ),
+    ]);
     const legacy = PRODUCTS.filter(
       (product) => product.category === "university" && !newIds.has(product.id),
     );
 
-    expect(PRODUCTS.filter((product) => newIds.has(product.id))).toHaveLength(additions.length);
+    expect(PRODUCTS.filter((product) => newIds.has(product.id))).toHaveLength(newIds.size);
     expect(legacy.length).toBeGreaterThan(0);
     expect(Math.max(...legacy.map((product) => product.priceEtb))).toBeLessThanOrEqual(85);
   });
