@@ -208,7 +208,6 @@ function readCommunityStorage<T extends { id: string }>(key: string, sampleIds: 
 }
 
 export default function App() {
-  const [privacyShieldActive, setPrivacyShieldActive] = useState(false);
   const [lang, setLang] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem("addisvault_lang") as Language | null;
@@ -246,44 +245,6 @@ export default function App() {
   const [selectedBookRole, setSelectedBookRole] = useState<string>("all");
   const [selectedEdition, setSelectedEdition] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"featured" | "price_asc" | "price_desc">("featured");
-
-  useEffect(() => {
-    let restoreTimer: number | undefined;
-    const showShield = () => setPrivacyShieldActive(true);
-    const clearShield = () => setPrivacyShieldActive(false);
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") showShield();
-      else clearShield();
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
-      const screenshotShortcut =
-        key === "printscreen" ||
-        (event.ctrlKey && event.shiftKey && key === "s") ||
-        (event.metaKey && event.shiftKey && ["3", "4", "5", "6"].includes(key));
-      if (!screenshotShortcut) return;
-      event.preventDefault();
-      showShield();
-      window.clearTimeout(restoreTimer);
-      restoreTimer = window.setTimeout(clearShield, 3000);
-    };
-    const blockContextMenu = (event: MouseEvent) => event.preventDefault();
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    document.addEventListener("contextmenu", blockContextMenu);
-    window.addEventListener("blur", showShield);
-    window.addEventListener("focus", clearShield);
-    window.addEventListener("keydown", onKeyDown, true);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      document.removeEventListener("contextmenu", blockContextMenu);
-      window.removeEventListener("blur", showShield);
-      window.removeEventListener("focus", clearShield);
-      window.removeEventListener("keydown", onKeyDown, true);
-      window.clearTimeout(restoreTimer);
-    };
-  }, []);
 
   const handleSelectCategory = (next: CategoryId | "all") => {
     setSelectedCategory(next);
@@ -3047,16 +3008,6 @@ export default function App() {
               </form>
             )}
           </div>
-        </div>
-      )}
-
-      {privacyShieldActive && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950 p-6 text-center text-sm font-semibold text-white"
-          role="alert"
-          aria-live="assertive"
-        >
-          Privacy shield active. Return to the app to continue.
         </div>
       )}
 

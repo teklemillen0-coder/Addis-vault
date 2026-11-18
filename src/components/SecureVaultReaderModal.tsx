@@ -118,7 +118,7 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
         </div>
 
         {/* Protected Reader Content with Repeating Diagonal Watermark Overlay */}
-        <ProtectedContent watermark={watermarkString} lang={lang} className="flex-1 overflow-y-auto">
+        <ProtectedContent watermark={watermarkString} className="flex-1 overflow-y-auto">
         <div className="relative p-5 sm:p-8">
           {/* Dynamic Diagonal Watermark Grid */}
           <div

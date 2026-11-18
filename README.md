@@ -30,8 +30,8 @@ tokens are also stored in browser storage when saved and are sent directly to Gi
 using saved credentials on shared devices.
 
 Browser-delivered code can be inspected or copied, and browser scripts cannot reliably block
-developer tools or operating-system screenshots. Keep secrets and privileged operations on the
-server; the app's privacy shield is only a best-effort visual deterrent.
+developer tools or operating-system screenshots. Protected previews use a visible watermark;
+keep secrets and privileged operations on the server.
 
 Export a standalone HTML app, a PWA package, or a ZIP source bundle. Public links encode the
 project in the URL hash; anyone with the link can read its source. Use the export package for

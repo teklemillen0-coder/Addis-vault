@@ -112,7 +112,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           {product.hasVideoPreview && (
             <ProtectedContent
               active={!isUnlocked}
-              lang={lang}
               watermark={`PREVIEW · ${product.sku} · AddisVault`}
               className="overflow-hidden rounded-2xl"
             >
@@ -178,7 +177,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
             <ProtectedContent
               active={!isUnlocked}
-              lang={lang}
               watermark={`PREVIEW · ${product.sku}`}
               className="mt-3 rounded-lg"
             >
