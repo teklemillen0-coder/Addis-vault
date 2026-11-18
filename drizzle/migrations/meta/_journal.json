@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794726260730,
+      "tag": "0000_addisvault_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794805530670,
+      "tag": "0001_business_directory",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794805739278,
+      "tag": "0002_owner_catalog_items",
+      "breakpoints": true
+    }
+  ]
+}

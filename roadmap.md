@@ -1,0 +1,23 @@
+# AddisVault upgrade roadmap (16-point brief, Nov 2026)
+
+- [ ] 1 Payment accounts + copy + FT ref + instant unlock (verify)
+- [ ] 2 VIP pricing 1,000 (was 1,500) / 2,500 yearly (verify)
+- [ ] 3 5-language UI + per-download content language picker
+- [ ] 4 Generated textbooks: 14 regions x G1-12 x subjects x student/teacher x regional languages, 25-60 ETB, New Curriculum badge
+- [ ] 5 National exam archive G6/G8/G12 by grade > year > subject with answer keys
+- [ ] 6 University Hub tab (year + department filters, 20-85 ETB)
+- [ ] 7 Specialized libraries enriched (EBCS 1-14, auto by brand/year, diaspora + tourist guide, etc.)
+- [ ] 8 Link downloader 5-50 ETB (verify)
+- [ ] 9 CV studio: all countries, tiered 50-300 ETB, pay after preview
+- [ ] 10 PDF filler 30-100 ETB (verify)
+- [ ] 11 12 AI mini-apps (add 2)
+- [ ] 12 Legal drafter / consult / lawyers hub (verify)
+- [ ] 13 Free two-way job board (verify)
+- [ ] 14 Business directory (free search, 100-300 ETB listing), AI Video Ad Studio (150-500), expediter (verify)
+- [ ] 15 Bottom nav 5 tabs, AI Video Studio (50 / 120-500+ by duration), anti-piracy shield
+- [ ] 16 Hidden owner gate (5 logo taps + server-checked PIN + admin), dashboard sections, support, verified owner, settings
+- [ ] 17 Offline mode for published app (guarded service worker, essential screens cached, queued submissions sync on reconnect)
+- [ ] 18 Performance: 12-per-page "Load more" everywhere (library, regions, university, exams), lazy images
+- [ ] 19 Remove "Demo/Sample/Mock/Placeholder/Test Mode" wording site-wide; Lovable badge = project setting (not CSS hack)
+- [ ] 20 Owner Mode (5 taps + PIN + admin): free access to everything, "+ Add New" bar in every category/section, Edit/Delete on every card (DB-backed catalog overrides + file upload), "Owner Mode Active (Exit)" pill
+- [ ] 21 3-step welcome guide (Amharic + English) at top of Library

@@ -1,0 +1,104 @@
+{
+  "source": "code-archive (Google AI Studio export: Vite + React SPA with Express server.ts)",
+  "app": "AddisVault \u2014 Ethiopian Digital Library & Marketplace",
+  "capabilities": [
+    {
+      "capability": "code: React SPA (App.tsx, 30 components, catalogs, i18n, utils)",
+      "source": "src/**",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "assets: catalog + hero images",
+      "source": "src/assets/images/*.jpg, public/*",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "schema: workers, jobs, expediter requests, consultations, chat messages, members",
+      "source": "server.ts JSON file store (.data/superapp-store.json)",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "records",
+      "source": ".data/superapp-store.json (1 test member, 1 test chat message)",
+      "outcome": "skip-test-data",
+      "status": "pending",
+      "next_action": "Bundled store had only 1 test member + 1 test chat; ask user for the live store file from the deployed app (or skip)"
+    },
+    {
+      "capability": "auth identities: community members (phone/email + PIN, sha256)",
+      "source": "/api/community/members/register|login",
+      "outcome": "migrate",
+      "status": "pending",
+      "next_action": "Email/password accounts live; old phone+PIN members must sign up again with email (no real member export received)"
+    },
+    {
+      "capability": "authorization: owner dashboard (client-side PIN 0925) + expediter status updates",
+      "source": "OwnerDashboardView, PATCH /api/superapp/expediter/:id",
+      "outcome": "migrate",
+      "status": "pending",
+      "next_action": "Verified with a test owner; the real owner must sign up, then be granted the admin role"
+    },
+    {
+      "capability": "AI document generation (Gemini)",
+      "source": "POST /api/ai/generate, GEMINI_API_KEY",
+      "outcome": "replace with Lovable AI",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "Smart Link Downloader inspect + download proxy",
+      "source": "/api/link/inspect, /api/link/download",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "payments: Telebirr / CBE manual transfer checkout",
+      "source": "CheckoutModal (client-only, owner account numbers)",
+      "outcome": "preserve",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "PWA install + offline",
+      "source": "vite-plugin-pwa",
+      "outcome": "migrate",
+      "status": "pending",
+      "next_action": "Install-to-home-screen added (manifest + icons); offline caching not yet rebuilt \u2014 ask user if needed"
+    },
+    {
+      "capability": "public endpoints / webhooks / schedules",
+      "source": "none beyond the app's own /api routes",
+      "outcome": "n/a",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "secrets",
+      "source": "GEMINI_API_KEY, APP_URL (AI Studio platform-injected)",
+      "outcome": "drop",
+      "status": "verified",
+      "next_action": "Not needed after switching to Lovable AI"
+    },
+    {
+      "capability": "cutover",
+      "source": "AI Studio / Cloud Run deployment",
+      "outcome": "pending",
+      "status": "pending",
+      "next_action": "User publishes the Lovable app and points visitors to it"
+    },
+    {
+      "capability": "verification",
+      "source": "-",
+      "outcome": "pending",
+      "status": "verified",
+      "next_action": "Build, routes, sign-in, chat post, errand submit, owner reply, AI, link inspect/download checked"
+    }
+  ]
+}
