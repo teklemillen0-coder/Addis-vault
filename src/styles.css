@@ -201,3 +201,16 @@
     visibility: hidden !important;
   }
 }
+ .av-app-shell {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+ .av-app-shell img {
+   -webkit-user-drag: none;
+ }
+
+.av-app-shell :is(input, textarea, [contenteditable='true'], pre) {
+  -webkit-user-select: text;
+  user-select: text;
+}

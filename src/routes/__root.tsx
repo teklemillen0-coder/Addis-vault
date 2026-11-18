@@ -8,10 +8,9 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -38,9 +37,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -78,18 +74,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AddisVault — Ethiopian Digital Library & Marketplace" },
+      { title: "Addis-Vault — AI App Builder" },
       {
         name: "description",
-        content:
-          "Ethiopian digital library & marketplace with Telebirr & CBE checkout, study and exam resources, AI work tools, and a 5-language interface.",
+        content: "Build, preview, import, and export apps with your own AI provider keys.",
       },
-      { name: "author", content: "AddisVault" },
-      { property: "og:title", content: "AddisVault — Ethiopian Digital Library & Marketplace" },
+      { name: "author", content: "Addis-Vault" },
+      { property: "og:title", content: "Addis-Vault — AI App Builder" },
       {
         property: "og:description",
-        content:
-          "Ethiopian digital library & marketplace with Telebirr & CBE checkout, study and exam resources, AI work tools, and a 5-language interface.",
+        content: "Build, preview, import, and export apps with your own AI provider keys.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -97,7 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "apple-mobile-web-app-title", content: "AddisVault" },
+      { name: "apple-mobile-web-app-title", content: "Addis-Vault" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

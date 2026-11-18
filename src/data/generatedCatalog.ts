@@ -263,7 +263,7 @@ function buildTextbooks(): DigitalProduct[] {
                 if (lang === 'om') return `${head} — Kaarikulamii Haaraa 2016/2017 irratti hundaa'e; afaan barnootaa: ${row.lang}. VIP'n bilisa.`;
                 if (lang === 'ti') return `${head} — ብመሰረት ሓድሽ ስርዓተ ትምህርቲ 2016/2017፤ ቋንቋ ትምህርቲ፡ ${row.lang}። ብVIP ብነጻ።`;
                 if (lang === 'so') return `${head} — Manhajka Cusub 2016/2017; luqadda waxbarashada: ${row.lang}. Bilaash VIP.`;
-                return `${head} — aligned with the Ethiopian New Curriculum (2016/2017 E.C.); medium of instruction: ${row.lang}. Free with VIP Pass.`;
+                return `${head} — aligned with the Ethiopian New Curriculum (2016/2017 E.C.); medium of instruction: ${row.lang}.`;
               }),
               highlights: TEXTBOOK_HIGHLIGHTS[role],
               sampleExcerpt: map5(

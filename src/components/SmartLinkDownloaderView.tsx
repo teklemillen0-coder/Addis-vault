@@ -3,7 +3,6 @@ import { inspectLink } from '@/lib/link.functions';
 import {
   AlertCircle,
   CheckCircle2,
-  Crown,
   Download,
   ExternalLink,
   FileArchive,
@@ -12,17 +11,12 @@ import {
   Globe,
   Link2,
   Loader2,
-  Lock,
   Music,
   Trash2,
   Video,
   Youtube,
 } from 'lucide-react';
-import {
-  detectPlatformFromUrl,
-  getLinkPricingLabel,
-  PlatformDetectionResult,
-} from '../constants/linkDownloader';
+import { detectPlatformFromUrl, PlatformDetectionResult } from '../constants/linkDownloader';
 import {
   AdConfig,
   Language,
@@ -38,12 +32,9 @@ import { AdSlot } from './AdSlot';
 interface SmartLinkDownloaderViewProps {
   lang: Language;
   adConfig: AdConfig;
-  vipActive: boolean;
-  unlockedLinkIds: Set<string>;
   lastConfirmedLinkDownload: PendingLinkDownload | null;
   onConsumeConfirmedLinkDownload: () => void;
   onRequestCheckout: (item: PendingLinkDownload) => void;
-  onOpenVipModal: () => void;
   onTrackAdImpression: () => void;
   onTrackAdClick: () => void;
 }
@@ -57,29 +48,6 @@ interface InspectedLink {
   isWebPage: boolean;
   sizeBytes: number | null;
 }
-
-const QUICK_PUBLIC_URLS = [
-  {
-    label: 'YouTube Video / MP3',
-    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  },
-  {
-    label: 'TikTok HD (No Watermark)',
-    url: 'https://www.tiktok.com/@ethiopia_edu/video/7284920194821',
-  },
-  {
-    label: 'Facebook / IG Reel',
-    url: 'https://www.facebook.com/watch/?v=10158842910293',
-  },
-  {
-    label: 'Direct PDF Document',
-    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-  },
-  {
-    label: 'Wikipedia Article → PDF',
-    url: 'https://en.wikipedia.org/wiki/Ethiopia',
-  },
-];
 
 function formatBytes(bytes: number | null, fallback: string): string {
   if (!bytes || Number.isNaN(bytes)) return fallback;
@@ -116,12 +84,9 @@ export function buildLinkDownloadKey(url: string, formatId: string): string {
 export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = ({
   lang,
   adConfig,
-  vipActive,
-  unlockedLinkIds,
   lastConfirmedLinkDownload,
   onConsumeConfirmedLinkDownload,
   onRequestCheckout,
-  onOpenVipModal,
   onTrackAdImpression,
   onTrackAdClick,
 }) => {
@@ -242,7 +207,7 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
     inspected?.detectedTitle || inspected?.filename || liveDetection?.inferredTitle || 'Media / File';
   const currentDownloadKey =
     liveDetection && activeFormat ? buildLinkDownloadKey(urlInput, activeFormat.id) : '';
-  const isAlreadyUnlocked = vipActive || (currentDownloadKey ? unlockedLinkIds.has(currentDownloadKey) : false);
+  const isAlreadyUnlocked = true;
 
   const handleDownloadAction = () => {
     if (!liveDetection || !activeFormat) return;
@@ -283,14 +248,6 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onOpenVipModal}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-300"
-          >
-            <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-            <span>{getLinkPricingLabel(lang)}</span>
-          </button>
         </div>
 
         {/* Tiered Micro-Pricing Guide */}
@@ -337,26 +294,6 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
           </button>
         </form>
 
-        {/* Quick Public URL Buttons */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
-            {t.linkQuickExamples}
-          </span>
-          {QUICK_PUBLIC_URLS.map((preset) => (
-            <button
-              key={preset.url}
-              type="button"
-              onClick={() => {
-                setUrlInput(preset.url);
-                handleInspect(preset.url);
-              }}
-              className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-700 transition-colors hover:border-emerald-600 hover:text-emerald-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-stone-200"
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-
         {/* Error Message */}
         {errorMsg && (
           <div
@@ -400,10 +337,10 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
 
             <div className="text-right">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                {vipActive ? 'VIP Pass' : 'Fee'}
+                Access
               </div>
               <div className="font-mono text-2xl font-extrabold tabular-nums text-emerald-800 dark:text-emerald-400">
-                {vipActive ? '0 ETB' : `${activeFormat.priceEtb} ETB`}
+                Free
               </div>
             </div>
           </div>
@@ -416,7 +353,7 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
             <div className="grid gap-2.5 sm:grid-cols-3">
               {liveDetection.formats.map((opt) => {
                 const selected = opt.id === activeFormat.id;
-                const unlockedOpt = vipActive || unlockedLinkIds.has(buildLinkDownloadKey(urlInput, opt.id));
+                const unlockedOpt = true;
                 return (
                   <button
                     key={opt.id}
@@ -433,7 +370,7 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
                         .{opt.fileExt}
                       </span>
                       <span className="font-mono font-extrabold text-emerald-800 dark:text-emerald-400">
-                        {unlockedOpt ? '0 ETB / Free' : `${opt.priceEtb} ETB`}
+                        Free
                       </span>
                     </div>
                     <div className="mt-1 text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100">
@@ -451,17 +388,8 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
           {/* Checkout / Instant Download CTA */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400">
-              {isAlreadyUnlocked ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Ready for instant download on this device</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  <span>Pay via Telebirr (0925695197) or CBE (1000211261513) to unlock</span>
-                </>
-              )}
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Ready for free download</span>
             </div>
 
             <button
@@ -475,11 +403,7 @@ export const SmartLinkDownloaderView: React.FC<SmartLinkDownloaderViewProps> = (
             >
               <Download className="h-4 w-4" />
               <span>
-                {vipActive
-                  ? t.linkFreeVipBtn
-                  : isAlreadyUnlocked
-                  ? t.linkUnlockedBtn
-                  : `${t.linkPayAndDownloadBtn} (${activeFormat.priceEtb} ETB)`}
+                {t.linkUnlockedBtn}
               </span>
             </button>
           </div>

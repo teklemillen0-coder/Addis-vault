@@ -91,9 +91,10 @@ describe("Security & clean production ad defaults", () => {
     expect(verifyOwnerPin("0925", "")).toBe(false);
   });
 
-  it("uses clean default partner banner flags", () => {
-    expect(DEFAULT_AD_CONFIG.showDefaultBanners).toBe(true);
-    expect(DEFAULT_AD_CONFIG.directSponsors.every((b) => b.isDefault === true)).toBe(true);
+  it("starts with ads and demo sponsor banners disabled", () => {
+    expect(DEFAULT_AD_CONFIG.adsEnabled).toBe(false);
+    expect(DEFAULT_AD_CONFIG.showDefaultBanners).toBe(false);
+    expect(DEFAULT_AD_CONFIG.directSponsors).toEqual([]);
   });
 });
 

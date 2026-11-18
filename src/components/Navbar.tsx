@@ -16,7 +16,6 @@ import {
   Scale,
   Settings,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   Store,
   Sun,
@@ -33,9 +32,7 @@ interface NavbarProps {
   onChangeLang: (lang: Language) => void;
   activeTab: ViewTab;
   onSelectTab: (tab: ViewTab) => void;
-  cartCount: number;
   downloadsCount: number;
-  onOpenCart: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   isInstalled: boolean;
@@ -52,9 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onChangeLang,
   activeTab,
   onSelectTab,
-  cartCount,
   downloadsCount,
-  onOpenCart,
   theme,
   onToggleTheme,
   isInstalled,
@@ -184,6 +179,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             type="button"
+            onClick={() => onSelectTab('app_builder')}
+            className={`inline-flex items-center gap-1 py-2 text-xs font-medium transition-colors whitespace-nowrap shrink-0 border-b-2 ${
+              activeTab === 'app_builder'
+                ? 'border-emerald-600 text-emerald-700 dark:border-emerald-400 dark:text-emerald-400'
+                : 'border-transparent text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+            <span>App Builder</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => onSelectTab('jobs')}
             className={`inline-flex items-center gap-1 py-2 text-xs font-medium transition-colors whitespace-nowrap shrink-0 border-b-2 ${
               activeTab === 'jobs'
@@ -274,7 +282,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Language Switcher, Link Tool, Settings, Owner, Theme, Cart, Install */}
+        {/* Zone 3: Language Switcher, Link Tool, Settings, Owner, Theme, Install */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Prominent Language Switcher */}
           <div className="relative flex items-center">
@@ -315,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={onOpenMemberAuth}
-            title={currentMember ? `${currentMember.fullName} (${currentMember.points} pts)` : t.memberSignUpLoginBtn}
+            title={currentMember ? currentMember.fullName : t.memberSignUpLoginBtn}
             className={`flex min-h-[36px] items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
               currentMember
                 ? 'border-emerald-600/40 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-300'
@@ -383,29 +391,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
           </button>
 
-          {/* Cart Button */}
-          <button
-            type="button"
-            onClick={onOpenCart}
-            aria-label={t.cartLabel}
-            className="flex min-h-[36px] items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-800 transition-colors hover:border-emerald-600 whitespace-nowrap shrink-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-100"
-          >
-            <ShoppingBag className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-            <span className="tabular-nums font-mono text-xs font-semibold text-amber-700 dark:text-amber-400">
-              {cartCount}
-            </span>
-          </button>
 
           {/* Prominent PWA Install App Button */}
           {!isInstalled && (
             <button
               type="button"
               onClick={onInstallClick}
+              title="Install Addis-Vault"
+              aria-label="Install Addis-Vault"
               className="hidden sm:flex min-h-[36px] items-center gap-1.5 rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 whitespace-nowrap shrink-0 dark:bg-emerald-600 dark:hover:bg-emerald-500"
             >
               <Download className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden xl:inline">{t.installAppBtn}</span>
-              <span className="xl:hidden">App</span>
+              <span>Install App</span>
             </button>
           )}
         </div>
@@ -413,6 +410,28 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Secondary Utility Strip */}
       <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto border-t border-stone-100 px-4 py-1.5 text-xs dark:border-zinc-900">
+        {!isInstalled && (
+          <button
+            type="button"
+            onClick={onInstallClick}
+            className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-emerald-700 px-2.5 py-1 font-semibold text-white"
+          >
+            <Download className="h-3 w-3" />
+            <span>Install App</span>
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onSelectTab('app_builder')}
+          className={`inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1 font-semibold ${
+            activeTab === 'app_builder'
+              ? 'bg-emerald-700 text-white'
+              : 'bg-stone-100 text-stone-700 dark:bg-zinc-900 dark:text-stone-300'
+          }`}
+        >
+          <Sparkles className="h-3 w-3" />
+          <span>App Builder</span>
+        </button>
         <button
           type="button"
           onClick={() => onSelectTab('pdf_editor')}

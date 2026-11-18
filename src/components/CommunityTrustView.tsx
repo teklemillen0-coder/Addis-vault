@@ -1,22 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Award,
   CheckCircle2,
-  Crown,
   Eye,
   EyeOff,
   Flag,
-  Gift,
   MessageSquare,
   Send,
   ShieldAlert,
   ShieldCheck,
   ThumbsUp,
-  Timer,
-  Trophy,
   UserPlus,
 } from 'lucide-react';
-import { SEED_LEADERBOARD_MEMBERS } from '../constants/pdfAndCommunity';
 import { UI_TRANSLATIONS } from '../i18n/translations';
 import {
   ChatRoomFilter,
@@ -28,6 +22,7 @@ import {
   checkClientRateLimit,
   sanitizeAndFilterChatMessage,
 } from '../utils/appSecurity';
+import { getChatModerationReason } from '../utils/chatModeration';
 
 interface CommunityTrustViewProps {
   lang: Language;
@@ -40,18 +35,6 @@ interface CommunityTrustViewProps {
   onHelpfulMessage: (msgId: string) => void;
   onReportMessage: (msgId: string) => void;
   onBlockMember: (memberId: string) => void;
-  onClaimMonthlyReward: (rewardLabel: string) => void;
-}
-
-function getMonthCountdown() {
-  const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
-  const diffMs = Math.max(0, nextMonth.getTime() - now.getTime());
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-  const mins = Math.floor((diffMs / (1000 * 60)) % 60);
-  const secs = Math.floor((diffMs / 1000) % 60);
-  return `${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
 }
 
 export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
@@ -65,10 +48,8 @@ export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
   onHelpfulMessage,
   onReportMessage,
   onBlockMember,
-  onClaimMonthlyReward,
 }) => {
   const t = UI_TRANSLATIONS[lang];
-  const [countdown, setCountdown] = useState(getMonthCountdown);
   const [roomFilter, setRoomFilter] = useState<ChatRoomFilter>('all');
   const [postRoom, setPostRoom] = useState<'trust' | 'exams' | 'careers'>('trust');
   const [draftText, setDraftText] = useState('');
@@ -76,28 +57,11 @@ export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
   const [postError, setPostError] = useState<string | null>(null);
   const [revealedPhoneMsgIds, setRevealedPhoneMsgIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const timer = setInterval(() => setCountdown(getMonthCountdown()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const leaderboard = useMemo(() => {
-    const merged = [...SEED_LEADERBOARD_MEMBERS];
-    if (currentMember) {
-      const idx = merged.findIndex((m) => m.id === currentMember.id);
-      if (idx >= 0) merged[idx] = currentMember;
-      else merged.push(currentMember);
-    }
-    return merged.sort((a, b) => b.points - a.points);
-  }, [currentMember]);
-
-  const topWinner = leaderboard[0];
-
   const visibleMessages = useMemo(() => {
     return chatMessages.filter((msg) => {
       if (blockedMemberIds.includes(msg.memberId)) return false;
       if (roomFilter !== 'all' && msg.room !== roomFilter) return false;
-      return true;
+      return getChatModerationReason(msg.message) === null;
     });
   }, [chatMessages, blockedMemberIds, roomFilter]);
 
@@ -122,6 +86,10 @@ export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
     }
 
     const { clean, flaggedSpam } = sanitizeAndFilterChatMessage(draftText);
+    if (getChatModerationReason(clean)) {
+      setPostError('This message was blocked because it may contain violent, hateful, abusive, or self-harm content.');
+      return;
+    }
     if (clean.length < 3) {
       setPostError('Please enter at least 3 characters.');
       return;
@@ -153,10 +121,6 @@ export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
     setDraftText('');
   };
 
-  const currentRank = currentMember
-    ? leaderboard.findIndex((m) => m.id === currentMember.id) + 1
-    : null;
-
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 space-y-8">
       {/* Header + Member Status */}
@@ -164,7 +128,7 @@ export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-400">
             <ShieldCheck className="h-4 w-4" />
-            <span>Community Trust &amp; Monthly Loyalty Engine</span>
+            <span>Community chat safety</span>
           </div>
           <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
             {t.communityChatTitle}
@@ -180,135 +144,12 @@ export const CommunityTrustView: React.FC<CommunityTrustViewProps> = ({
           className="inline-flex min-h-[42px] items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-800 dark:bg-emerald-600"
         >
           <UserPlus className="h-4 w-4" />
-          <span>
-            {currentMember
-              ? `${currentMember.fullName} (${currentMember.id}) · ${currentMember.points} pts`
-              : t.memberSignUpLoginBtn}
-          </span>
+          <span>{currentMember ? currentMember.fullName : t.memberSignUpLoginBtn}</span>
         </button>
       </div>
 
-      {/* Automatic Monthly Active User Reward Engine */}
       <div className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-5 space-y-4 rounded-2xl border border-amber-300/70 bg-amber-50/50 p-5 sm:p-6 dark:border-amber-700/40 dark:bg-amber-950/20">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
-                <Trophy className="h-4 w-4" />
-                <span>{t.monthlyRewardTitle}</span>
-              </div>
-              <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
-                {t.monthlyRewardWinnerBanner}
-              </p>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="text-[10px] font-medium text-stone-500 dark:text-stone-400">
-                {t.monthlyRewardCountdownLabel}
-              </div>
-              <div className="inline-flex items-center gap-1 font-mono text-xs font-bold tabular-nums text-amber-800 dark:text-amber-300">
-                <Timer className="h-3.5 w-3.5" />
-                <span>{countdown}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Current Month Winner Spotlight */}
-          {topWinner && (
-            <div className="rounded-xl border border-amber-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="inline-flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
-                  <Crown className="h-4 w-4" />
-                  <span>#1 Active Leader ({topWinner.region})</span>
-                </span>
-                <span className="font-mono font-extrabold text-emerald-700 dark:text-emerald-400">
-                  {topWinner.points} pts
-                </span>
-              </div>
-              <div className="mt-1 font-display text-base font-extrabold text-stone-900 dark:text-stone-100">
-                {topWinner.fullName} · {topWinner.id}
-              </div>
-              <div className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
-                Reward: Free 1-Month VIP Pass + 100 ETB Referral Credit
-              </div>
-            </div>
-          )}
-
-          {/* Live Leaderboard Table */}
-          <div className="rounded-xl border border-stone-200 bg-white overflow-hidden dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="border-b border-stone-200 px-4 py-2.5 text-xs font-bold text-stone-700 dark:border-zinc-800 dark:text-stone-200">
-              Live Monthly Leaderboard {currentRank ? `(Your Rank: #${currentRank})` : ''}
-            </div>
-            <div className="divide-y divide-stone-100 dark:divide-zinc-800">
-              {leaderboard.slice(0, 6).map((mbr, index) => {
-                const isSelf = currentMember?.id === mbr.id;
-                return (
-                  <div
-                    key={mbr.id}
-                    className={`flex items-center justify-between gap-2 px-4 py-2.5 text-xs ${
-                      isSelf ? 'bg-emerald-50/70 dark:bg-emerald-950/30' : ''
-                    }`}
-                  >
-                    <div className="min-w-0 flex items-center gap-2.5">
-                      <span className="font-mono font-bold text-stone-400 w-5">
-                        #{index + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="font-semibold text-stone-900 dark:text-stone-100 truncate">
-                          {mbr.fullName} {isSelf ? '(You)' : ''}
-                        </div>
-                        <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
-                          {mbr.region} · {mbr.role}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="font-mono font-bold tabular-nums text-emerald-700 dark:text-emerald-400 shrink-0">
-                      {mbr.points} pts
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Instant Automatic Reward Claim for Active Members */}
-          <div className="rounded-xl border border-emerald-200 bg-white p-4 space-y-2 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <span className="flex items-center gap-1.5 font-bold text-stone-900 dark:text-stone-100">
-                <Gift className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-                <span>Auto Milestone Reward (200+ pts)</span>
-              </span>
-              {currentMember && (
-                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                  {currentMember.points} / 200 pts
-                </span>
-              )}
-            </div>
-            {currentMember?.monthlyRewardClaimed ? (
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>
-                  {t.monthlyRewardClaimedLabel}: {currentMember.monthlyRewardClaimed}
-                </span>
-              </div>
-            ) : currentMember && currentMember.points >= 200 ? (
-              <button
-                type="button"
-                onClick={() => onClaimMonthlyReward('Free 1-Month VIP Pass + 150 ETB Wallet Voucher')}
-                className="flex min-h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600"
-              >
-                <Award className="h-4 w-4" />
-                <span>{t.monthlyRewardClaimBtn}</span>
-              </button>
-            ) : (
-              <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                Sign in, download books, refer friends (+75 pts), or post helpful answers (+15 pts) to unlock an instant Free VIP Pass or Book Voucher.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Secure Community Trust & Group Chat */}
-        <div className="lg:col-span-7 flex flex-col rounded-2xl border border-stone-200 bg-white overflow-hidden dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="lg:col-span-12 flex flex-col rounded-2xl border border-stone-200 bg-white overflow-hidden dark:border-zinc-800 dark:bg-zinc-900">
           {/* Room Tabs */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
             <div className="flex flex-wrap items-center gap-1.5">

@@ -1,26 +1,48 @@
-# Addis Vault Market Circle
+# Addis-Vault
 
-/skill:migrate-external-project Source: code archive. Migrate the attached project into Lovable.
+Addis-Vault is a public Ethiopian digital marketplace and AI app-building workspace. The
+application is built with React, TypeScript, TanStack Start, and Vite.
 
-This project was built with [Lovable](https://lovable.dev).
+## Run locally
 
-**Live app**: https://addis-vault-market-circle.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/0951c0d0-afc3-46e1-af47-45daf491fba2).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requirements: Node.js and npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
+
+Create a production build with:
+
+```sh
+npm run build
+```
+
+## AI App Builder
+
+Open **App Builder** from the navigation to create or import a project. New workspaces are
+empty. Import HTML, JavaScript, JSX, CSS, JSON, ZIP archives, or source files from a public
+GitHub repository.
+
+The builder supports OpenRouter, Gemini, Groq, and custom OpenAI-compatible endpoints. API
+keys are stored in browser `localStorage` and sent directly to the selected provider. GitHub
+tokens are also stored in browser storage when saved and are sent directly to GitHub. Avoid
+using saved credentials on shared devices.
+
+Browser-delivered code can be inspected or copied, and browser scripts cannot reliably block
+developer tools or operating-system screenshots. Keep secrets and privileged operations on the
+server; the app's privacy shield is only a best-effort visual deterrent.
+
+Export a standalone HTML app, a PWA package, or a ZIP source bundle. Public links encode the
+project in the URL hash; anyone with the link can read its source. Use the export package for
+larger projects.
+
+## Deployment
+
+The app includes a web manifest and service worker. Vercel response headers are configured in
+`vercel.json`; Netlify-compatible static headers are in `public/_headers`. GitHub Pages does
+not support custom response headers, so browser-enforced Permissions-Policy restrictions
+cannot be guaranteed on that host.
+
+The owner panel remains restricted to an authenticated administrator. Its local settings are
+stored in the current browser and are not platform-wide.

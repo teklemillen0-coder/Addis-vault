@@ -27,10 +27,7 @@ import { buildRealPdfBytes, triggerUint8Download } from '../utils/documentExport
 
 interface CvBuilderViewProps {
   lang: Language;
-  unlockedCvCountryIds: Set<string>;
-  vipActive: boolean;
   onRequestCheckout: (standard: CvCountryStandard) => void;
-  onOpenVipModal: () => void;
 }
 
 function triggerBlobDownload(filename: string, content: string, mimeType: string) {
@@ -47,10 +44,7 @@ function triggerBlobDownload(filename: string, content: string, mimeType: string
 
 export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
   lang,
-  unlockedCvCountryIds,
-  vipActive,
   onRequestCheckout,
-  onOpenVipModal,
 }) => {
   const t = UI_TRANSLATIONS[lang];
   const [selectedCountryId, setSelectedCountryId] = useState<CvCountryId>('usa_canada');
@@ -97,7 +91,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
       );
     });
   }, [countryRegionFilter, countrySearch, lang]);
-  const isUnlocked = vipActive || unlockedCvCountryIds.has(standard.id);
+  const isUnlocked = true;
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -360,15 +354,15 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
         </button>
       </div>
 
-      {/* Global Country Search & Region Filter (195+ Countries · 50–300 ETB) */}
+      {/* Global Country Search & Region Filter */}
       <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5 space-y-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
-              Select Destination Country Standard ({ALL_CV_COUNTRIES.length} Countries · 50–300 ETB)
+              Select Destination Country Standard ({ALL_CV_COUNTRIES.length} Countries)
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              Selected: <strong className="text-emerald-800 dark:text-emerald-400">{standard.countryName[lang]}</strong> ({standard.priceEtb} ETB)
+              Selected: <strong className="text-emerald-800 dark:text-emerald-400">{standard.countryName[lang]}</strong> — Free
             </p>
           </div>
           <input
@@ -400,7 +394,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
         <div className="grid max-h-[340px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCountries.map((item) => {
             const active = item.id === selectedCountryId;
-            const itemUnlocked = vipActive || unlockedCvCountryIds.has(item.id);
+            const itemUnlocked = true;
             return (
               <button
                 key={item.id}
@@ -420,7 +414,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
                     {itemUnlocked ? (
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>Unlocked</span>
+                        <span>Free</span>
                       </span>
                     ) : (
                       <span className="font-mono text-sm font-extrabold text-emerald-800 dark:text-emerald-400">
@@ -449,7 +443,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
               የአጻጻፍ መመሪያ · {standard.countryName[lang]} Rules &amp; Checklist
             </h2>
             <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300">
-              Export Fee: {standard.priceEtb} ETB (Free Preview)
+              Free export
             </span>
           </div>
           <div className="mt-3 grid gap-4 md:grid-cols-2">
@@ -893,7 +887,6 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={onOpenVipModal}
                     className="min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
                   >
                     <Crown className="h-3.5 w-3.5" />

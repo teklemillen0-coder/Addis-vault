@@ -1,4 +1,4 @@
-// Browser-side reads for AddisVault's community data (Lovable Cloud, protected by access rules).
+// Browser-side reads for AddisVault's community data, protected by access rules.
 import { supabase } from "@/integrations/supabase/client";
 import type {
   CommunityChatMessage,
@@ -33,9 +33,14 @@ export async function loadCommunityBoard(isAdmin: boolean): Promise<CommunityBoa
   ]);
 
   const board: CommunityBoard = {
-    workers: (workersRes.data ?? []).map((r) => r.payload as unknown as WorkerProfile),
-    jobs: (jobsRes.data ?? []).map((r) => r.payload as unknown as JobListing),
-    chatMessages: (chatRes.data ?? []).map((m) => ({
+    workers: (workersRes.data ?? [])
+      .map((r) => r.payload as unknown as WorkerProfile)
+      .filter((worker) => !['wk-1', 'wk-2', 'wk-3', 'wk-4'].includes(worker.id)),
+    jobs: (jobsRes.data ?? [])
+      .map((r) => r.payload as unknown as JobListing)
+      .filter((job) => !['jb-1', 'jb-2', 'jb-3'].includes(job.id)),
+    chatMessages: (chatRes.data ?? [])    .filter((m) => !m.id.startsWith("msg-seed-"))
+    .map((m) => ({
       id: m.id,
       memberId: m.member_code,
       authorName: m.author_name,

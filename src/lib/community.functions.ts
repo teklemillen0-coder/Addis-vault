@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sanitizeRecordStrings, sanitizeServerText } from "./server-sanitize";
+import { getChatModerationReason } from "@/utils/chatModeration";
 
 // Community job board, expediter inbox, legal consultations and chat.
 // Public submissions are validated here and written with the service client;
@@ -190,6 +191,9 @@ export const postChatMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<Ok> => {
     const message = sanitizeServerText(data.message, 800);
     if (message.length < 3) return { ok: false, error: "Message is too short." };
+    if (getChatModerationReason(message)) {
+      return { ok: false, error: "Message blocked by safety moderation." };
+    }
     const { data: profile, error: pErr } = await context.supabase
       .from("profiles")
       .select("member_code, full_name, region, member_role, verified_buyer, phone")

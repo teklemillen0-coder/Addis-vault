@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Award,
   CheckCircle2,
   LogOut,
   ShieldCheck,
@@ -183,30 +182,6 @@ export const MemberAuthModal: React.FC<MemberAuthModalProps> = ({
                 <div className="text-xs text-stone-600 dark:text-stone-400">
                   {currentMember.role} · {currentMember.region}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="rounded-xl border border-stone-200 bg-stone-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-                  <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
-                    Activity Points
-                  </div>
-                  <div className="mt-1 font-mono text-xl font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {currentMember.points}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-stone-200 bg-stone-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-                  <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
-                    Verified Purchases
-                  </div>
-                  <div className="mt-1 font-mono text-xl font-extrabold tabular-nums text-amber-700 dark:text-amber-400">
-                    {Math.max(currentMember.purchasesCount, ordersCount)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 rounded-xl border border-stone-200 p-3 text-xs text-stone-600 dark:border-zinc-800 dark:text-stone-400">
-                <Award className="h-4 w-4 shrink-0 text-amber-600" />
-                <span>Logins (+10), Downloads (+25), Purchases (+100), Referrals (+75), Helpful Chats (+15) count toward Monthly Rewards.</span>
               </div>
 
               <button

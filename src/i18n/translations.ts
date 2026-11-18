@@ -160,7 +160,6 @@ export interface UITranslations {
   adsMasterLabel: string;
   adsMasterOn: string;
   adsMasterOff: string;
-  demoBannersLabel: string;
   activeSourceLabel: string;
   sourceAuto: string;
   sourceAdsense: string;
@@ -325,7 +324,7 @@ export interface UITranslations {
 
 export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
   en: {
-    brandName: 'AddisVault',
+    brandName: 'Addis-Vault',
     navMarketplace: 'Library',
     navCvStudio: 'CV Studio',
     navPdfEditor: 'PDF Filler & AI',
@@ -493,7 +492,6 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     adsMasterLabel: 'Marketplace Ad Placements',
     adsMasterOn: 'Ads Active',
     adsMasterOff: 'Ads Paused',
-    demoBannersLabel: 'Show Ethiopian Partner Banners (fallback when no live network code is active)',
     activeSourceLabel: 'Primary Ad Source Priority',
     sourceAuto: 'Smart Auto (Direct Sponsor → Live Script → Partner)',
     sourceAdsense: 'Google AdSense',
@@ -659,7 +657,7 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     verifiedOwnerBioUpdateTitle: 'Verified Owner Profile & Photo (Admin)',
   },
   am: {
-    brandName: 'አዲስ ቮልት',
+    brandName: 'Addis-Vault',
     navMarketplace: 'ቤተ-መጻሕፍት',
     navCvStudio: 'CV መስሪያ',
     navPdfEditor: 'PDF መሙያ እና AI',
@@ -827,7 +825,6 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     adsMasterLabel: 'የማስታወቂያ ቦታዎች ሁኔታ',
     adsMasterOn: 'ማስታወቂያዎች በርተዋል',
     adsMasterOff: 'ማስታወቂያዎች ጠፍተዋል',
-    demoBannersLabel: 'የኢትዮጵያ አጋር ስፖንሰር ባነሮችን አሳይ (ቀጥታ ኮድ ከሌለ)',
     activeSourceLabel: 'ዋና የማስታወቂያ ምንጭ ቅደም ተከተል',
     sourceAuto: 'ራስ-ሰር (ቀጥታ ስፖንሰር → ቀጥታ ኮድ → አጋር)',
     sourceAdsense: 'Google AdSense',
@@ -993,7 +990,7 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     verifiedOwnerBioUpdateTitle: 'የባለቤቱን ፎቶ እና መግለጫ አስተካክል (Admin)',
   },
   om: {
-    brandName: 'AddisVault',
+    brandName: 'Addis-Vault',
     navMarketplace: 'Kuusaa',
     navCvStudio: 'CV Addunyaa',
     navPdfEditor: 'PDF & AI Editor',
@@ -1161,7 +1158,6 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     adsMasterLabel: 'Beeksisoota Gabaa',
     adsMasterOn: 'Beeksisni Banaadha',
     adsMasterOff: 'Beeksisni Cufaadha',
-    demoBannersLabel: 'Baanara Ispoonsara Itoophiyaa Mulʼisi',
     activeSourceLabel: 'Madda Beeksisa Duraa',
     sourceAuto: 'Ofumaan (Istoonsara Kallattii → Koodii → Ispoonsara)',
     sourceAdsense: 'Google AdSense',
@@ -1326,7 +1322,7 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     verifiedOwnerBioUpdateTitle: 'Suuraa fi Ibsa Abbaa Haaromsi (Admin)',
   },
   ti: {
-    brandName: 'ኣዲስ ቮልት',
+    brandName: 'Addis-Vault',
     navMarketplace: 'ቤተ-መጻሕፍቲ',
     navCvStudio: 'መስርሒ CV',
     navPdfEditor: 'PDF መምልኢን AI',
@@ -1494,7 +1490,6 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     adsMasterLabel: 'ቦታታት መወዓውዒ ዕዳጋ',
     adsMasterOn: 'መወዓውዕታት ክፉታት እዮም',
     adsMasterOff: 'መወዓውዕታት ጠፊኦም ኣለዉ',
-    demoBannersLabel: 'ባነራት ስፖንሰር ኢትዮጵያ ኣርኢ',
     activeSourceLabel: 'ቀዳማይ ምንጪ መወዓውዒ',
     sourceAuto: 'ብርእሱ (ቀጥታ ስፖንሰር → ቀጥታ ኮድ → ኣጋር)',
     sourceAdsense: 'Google AdSense',
@@ -1659,7 +1654,7 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     verifiedOwnerBioUpdateTitle: 'ስእልን መግለጽን ዋና ኣመዓራሪ (Admin)',
   },
   so: {
-    brandName: 'AddisVault',
+    brandName: 'Addis-Vault',
     navMarketplace: 'Maktabadda',
     navCvStudio: 'Xafiiska CV-ga',
     navPdfEditor: 'PDF Buuxiye & AI',
@@ -1827,7 +1822,6 @@ export const UI_TRANSLATIONS: Record<Language, UITranslations> = {
     adsMasterLabel: 'Meelaha Xayeysiiska Suuqa',
     adsMasterOn: 'Xayeysiisku Wuu Shidan Yahay',
     adsMasterOff: 'Xayeysiisku Wuu Daman Yahay',
-    demoBannersLabel: 'Muuji Boodhadhka Shuraakada Itoobiya',
     activeSourceLabel: 'Isha Xayeysiiska Ugu Horreysa',
     sourceAuto: 'Otomaatig (Kafaala-qaade → Koodh Toos ah → Shuraako)',
     sourceAdsense: 'Google AdSense',

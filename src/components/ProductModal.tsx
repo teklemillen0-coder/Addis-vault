@@ -194,10 +194,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           <div>
             <div className="text-xs text-stone-500 dark:text-stone-400">{product.fileSize} · {product.format}</div>
             <div className="font-mono text-xl font-bold tabular-nums text-emerald-800 dark:text-emerald-400">
-              {product.priceEtb.toLocaleString()} ETB
+              {isUnlocked ? 'Free' : `${product.priceEtb.toLocaleString()} ETB`}
             </div>
             <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-              {lang === 'am' ? 'በVIP ጥቅል ነፃ' : 'Free with VIP Pass'}
+              {isUnlocked ? 'Available to everyone' : lang === 'am' ? 'ለሁሉም ነፃ' : 'Free for everyone'}
             </div>
           </div>
 

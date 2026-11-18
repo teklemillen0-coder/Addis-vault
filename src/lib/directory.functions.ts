@@ -2,10 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sanitizeServerText } from "./server-sanitize";
-import { directoryTierPrice } from "@/utils/servicePricing";
 
-// Business Location Directory. Searching is free (public SELECT on active rows, safe columns only).
-// Registration (100–300 ETB) is written here with the service client after the Telebirr/CBE ref step.
+// Public listing submissions are validated here; owners can moderate them afterward.
 
 const listingInput = z.object({
   id: z.string().trim().min(6).max(80),
@@ -19,15 +17,30 @@ const listingInput = z.object({
   hours: z.string().trim().max(120).default(""),
   mapUrl: z.string().trim().max(400).default(""),
   tier: z.enum(["basic", "standard", "featured"]),
-  refNumber: z.string().trim().min(4).max(64),
-  paymentMethod: z.enum(["telebirr", "cbe"]),
+  refNumber: z.string().trim().max(64).optional(),
+  paymentMethod: z.enum(["free", "telebirr", "cbe"]).optional(),
 });
 
 type Ok = { ok: true } | { ok: false; error: string };
 
+const listingSubmissionTimes = new Map<string, number[]>();
+
+function isListingRateLimited(phone: string): boolean {
+  const now = Date.now();
+  const key = phone.replace(/\D/g, "").slice(-9);
+  const recent = (listingSubmissionTimes.get(key) ?? []).filter((time) => now - time < 60 * 60 * 1000);
+  if (recent.length >= 3) return true;
+  recent.push(now);
+  listingSubmissionTimes.set(key, recent);
+  return false;
+}
+
 export const submitBusinessListing = createServerFn({ method: "POST" })
   .validator((input: z.input<typeof listingInput>) => listingInput.parse(input))
   .handler(async ({ data }): Promise<Ok> => {
+    if (isListingRateLimited(data.phone)) {
+      return { ok: false, error: "Please wait before submitting another business listing." };
+    }
     const mapUrl = /^https:\/\//i.test(data.mapUrl) ? sanitizeServerText(data.mapUrl, 400) : "";
     const phone = data.phone.replace(/[^0-9+\-\s()]/g, "").slice(0, 24);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -40,14 +53,14 @@ export const submitBusinessListing = createServerFn({ method: "POST" })
         area: sanitizeServerText(data.area, 80),
         address: sanitizeServerText(data.address, 200),
         phone,
-        description: data.tier === "basic" ? "" : sanitizeServerText(data.description, 800),
-        hours: data.tier === "basic" ? "" : sanitizeServerText(data.hours, 120),
-        map_url: data.tier === "basic" ? "" : mapUrl,
-        tier: data.tier,
-        featured: data.tier === "featured",
-        ref_number: sanitizeServerText(data.refNumber, 64).toUpperCase(),
-        payment_method: data.paymentMethod,
-        price_etb: directoryTierPrice(data.tier),
+        description: sanitizeServerText(data.description, 800),
+        hours: sanitizeServerText(data.hours, 120),
+        map_url: mapUrl,
+        tier: "basic",
+        featured: false,
+        ref_number: "",
+        payment_method: "free",
+        price_etb: 0,
         status: "active",
       },
       { onConflict: "id", ignoreDuplicates: true },

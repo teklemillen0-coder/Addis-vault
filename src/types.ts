@@ -38,7 +38,8 @@ export type ViewTab =
   | 'university'
   | 'directory'
   | 'video_studio'
-  | 'dashboard';
+  | 'dashboard'
+  | 'app_builder';
 
 export type AppFontScale = 'sm' | 'base' | 'lg' | 'xl';
 
@@ -95,7 +96,7 @@ export interface LegalConsultationBooking {
   phone: string;
   caseSummary: string;
   refNumber: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | 'free';
   createdAt: string;
 }
 
