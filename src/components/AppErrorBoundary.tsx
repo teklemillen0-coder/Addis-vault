@@ -28,6 +28,17 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
             <p className="mt-2 text-sm text-muted-foreground">
               Something went wrong while loading the app. Refresh the page to try again.
             </p>
+            <section
+              aria-label="Error details"
+              className="mt-4 max-h-72 overflow-auto rounded-md border border-border bg-muted p-3 text-left"
+            >
+              <p className="break-words font-mono text-xs text-foreground">
+                {this.state.error.message}
+              </p>
+              <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-xs text-muted-foreground">
+                {this.state.error.stack ?? "Stack trace unavailable."}
+              </pre>
+            </section>
             <button
               type="button"
               onClick={() => window.location.reload()}

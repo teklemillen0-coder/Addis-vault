@@ -1,5 +1,6 @@
 import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/integrations/supabase/is-configured";
 import { reloadCatalogChanges } from "@/lib/catalog-data";
 import { deleteCatalogItem } from "@/lib/catalog.functions";
 import { loadAccount, loadCommunityBoard } from "@/lib/community-data";
@@ -588,6 +589,7 @@ export default function App() {
 
   // Sync community job board, chat messages, and expediter inbox from server store on mount
   useEffect(() => {
+    if (!isSupabaseConfigured()) return;
     let cancelled = false;
     loadCommunityBoard(Boolean(account?.isAdmin))
       .then(
@@ -669,6 +671,7 @@ export default function App() {
 
   // Keep the signed-in member (Supabase account + profile) in sync
   useEffect(() => {
+    if (!isSupabaseConfigured()) return;
     let active = true;
     const sync = async () => {
       const acct = await loadAccount().catch(() => null);

@@ -18,6 +18,8 @@ describe("AppErrorBoundary", () => {
       );
 
       expect(screen.getByRole("heading", { name: "This page didn't load" })).toBeInTheDocument();
+      expect(screen.getByText("client render failure")).toBeInTheDocument();
+      expect(screen.getByText(/BrokenChild/)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Refresh page" })).toBeInTheDocument();
     } finally {
       consoleError.mockRestore();
