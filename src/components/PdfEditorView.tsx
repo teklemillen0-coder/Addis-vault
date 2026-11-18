@@ -164,7 +164,7 @@ export const PdfEditorView: React.FC<PdfEditorViewProps> = ({
         const wordDoc = `<!doctype html><html><head><meta charset="utf-8"><title>${sanitizeUserInput(
           docTitle,
           120
-        )}</title></head><body style="font-family:'Segoe UI',Calibri,Arial,sans-serif;max-width:780px;margin:32px auto;color:#1c1917;line-height:1.55;">
+        )}</title><style>body::before{content:"Addis-Vault Protected • Single-User License";position:fixed;z-index:999;top:44%;left:-8%;width:116%;text-align:center;transform:rotate(-24deg);color:rgba(120,113,108,.32);font:700 22px/1.2 sans-serif;pointer-events:none;}</style></head><body style="font-family:'Segoe UI',Calibri,Arial,sans-serif;max-width:780px;margin:32px auto;color:#1c1917;line-height:1.55;">
           <h1 style="color:#065f46;border-bottom:2px solid #065f46;padding-bottom:8px;">${sanitizeUserInput(
             docTitle,
             140

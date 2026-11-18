@@ -36,3 +36,4 @@ export function getPromoDiscountPercent(code: string | null): number {
 }
 
 export const CURRENCY_CODE = 'ETB';
+export const WATERMARK_REMOVAL_FEE_ETB = 200;

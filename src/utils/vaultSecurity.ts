@@ -48,8 +48,7 @@ export function isOrderBoundToCurrentDevice(
   order: PurchaseOrder,
   currentDeviceId: string
 ): boolean {
-  if (!order.deviceId) return true; // Legacy order backward compatibility
-  return order.deviceId === currentDeviceId;
+  return Boolean(order.deviceId) && order.deviceId === currentDeviceId;
 }
 
 export function isVipActiveOnCurrentDevice(

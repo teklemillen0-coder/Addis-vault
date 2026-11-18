@@ -116,7 +116,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           {product.hasVideoPreview && (
             <ProtectedContent
               active={!isUnlocked}
-              watermark={`Addis-Vault Protected · ${watermarkId} · ${product.sku}`}
+              watermark={`Addis-Vault Protected • Single-User License · ${watermarkId} · ${product.sku}`}
               className="overflow-hidden rounded-2xl"
             >
               <VideoPreviewPlayer
@@ -181,7 +181,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
             <ProtectedContent
               active={!isUnlocked}
-              watermark={`Addis-Vault Protected · ${watermarkId} · ${product.sku}`}
+              watermark={`Addis-Vault Protected • Single-User License · ${watermarkId} · ${product.sku}`}
               className="mt-3 rounded-lg"
             >
               <p className="p-1 text-sm leading-relaxed text-stone-700 dark:text-stone-300">

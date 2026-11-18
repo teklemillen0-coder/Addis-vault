@@ -39,10 +39,28 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
   const [msLeft, setMsLeft] = useState<number>(0);
   const [contentLang, setContentLang] = useState<Language>(initialLang || lang);
   const [downloadingVault, setDownloadingVault] = useState(false);
+  const [termsAcceptedProductId, setTermsAcceptedProductId] = useState<string | null>(null);
 
   useEffect(() => {
     setContentLang(initialLang || lang);
   }, [initialLang, lang, product?.id]);
+
+  useEffect(() => {
+    setTermsAcceptedProductId(null);
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (!product) return;
+    const onProtectedShortcut = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'p', 's', 'x'].includes(key)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', onProtectedShortcut, true);
+    return () => document.removeEventListener('keydown', onProtectedShortcut, true);
+  }, [product]);
 
   useEffect(() => {
     if (!token) {
@@ -64,15 +82,59 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
   const buyerLabel =
     token.buyerLabel || order?.buyerContact || order?.refNumber || 'VIP Member';
   const refTag = order?.refNumber || 'VIP-PASS';
-  const watermarkString = `${t.vaultWatermarkLabel}: ${buyerLabel} · Ref ${refTag} · Device ${deviceShort} · AddisVault`;
+  const watermarkString = `Addis-Vault Protected • Single-User License · ${t.vaultWatermarkLabel}: ${buyerLabel} · Ref ${refTag} · Device ${deviceShort}`;
 
   const preventPiracyAction = (e: React.SyntheticEvent) => {
     e.preventDefault();
   };
 
+  if (termsAcceptedProductId !== product.id) {
+    const isAmharic = lang === 'am';
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vault-terms-title"
+          className="w-full max-w-xl rounded-2xl border border-stone-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
+            <ShieldCheck className="h-5 w-5" />
+            <h2 id="vault-terms-title" className="font-display text-lg font-bold">
+              Terms &amp; Anti-Piracy Policy / የአጠቃቀም ሕግ እና ደንብ
+            </h2>
+          </div>
+          {isAmharic ? (
+            <div className="mt-4 space-y-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+              <p>ይዘቱ ለአንድ ተጠቃሚ፣ በአንድ መሳሪያ ላይ ለግል አጠቃቀም ብቻ በፈቃድ የተሰጠ ነው።</p>
+              <p>ማጋራት፣ ማስተላለፍ፣ በስክሪን ላይ መቅዳት/ማንሳት፣ ማተም፣ መቅዳት ወይም እንደገና ማሰራጨት ክልክል ነው፤ ያልተፈቀደ ስርጭት የቅጂ መብትን ሊጥስ ይችላል።</p>
+              <p>የግዢ ፈቃድዎ ከዚህ የመተግበሪያ መሳሪያ መለያ ጋር ይያያዛል። የተረጋገጠ ያልተፈቀደ ስርጭት የመዳረሻ መታገድ ሊያስከትል ይችላል።</p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+              <p>Materials are licensed strictly for one purchaser’s personal use on one device.</p>
+              <p>Sharing, forwarding, screen-recording, screenshotting, copying, printing, or redistributing licensed files is prohibited. Unauthorized redistribution may violate applicable copyright law.</p>
+              <p>Your purchase is associated with this app installation’s device ID. Verified misuse may result in access suspension or a device-bound access lock. Web browsers cannot reliably detect every screenshot or recording, and this policy does not promise automatic account locking.</p>
+            </div>
+          )}
+          <div className="mt-5 rounded-xl border border-amber-300/70 bg-amber-50/70 p-3 text-xs leading-relaxed text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200">
+            Android’s secure-window setting blocks system screenshots and recordings in the APK. Browser-based protection is best-effort only.
+          </div>
+          <button
+            type="button"
+            onClick={() => setTermsAcceptedProductId(product.id)}
+            className="mt-5 min-h-11 w-full rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600"
+          >
+            {isAmharic ? 'እስማማለሁ — ይዘቱን ክፈት' : 'I Agree & Open Licensed Material'}
+          </button>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4"
+      className="av-vault-reader fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="vault-reader-title"
@@ -80,6 +142,14 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
       onCopy={preventPiracyAction}
       onCut={preventPiracyAction}
       onDragStart={preventPiracyAction}
+      onKeyDown={(event) => {
+        if (
+          (event.ctrlKey || event.metaKey) &&
+          ['a', 'c', 'p', 's', 'x'].includes(event.key.toLowerCase())
+        ) {
+          preventPiracyAction(event);
+        }
+      }}
     >
       <div className="relative flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl select-none dark:border-zinc-800 dark:bg-zinc-950">
         {/* Top Security Bar */}

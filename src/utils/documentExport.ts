@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 
 export function triggerUint8Download(
   filename: string,
@@ -31,6 +31,7 @@ export async function renderDocumentToCanvasPng(params: {
   sections: { heading: string; content: string }[];
   signatureFooter?: string;
   photoDataUrl?: string;
+  watermark?: string | null;
 }): Promise<{ dataUrl: string; bytes: Uint8Array }> {
   const width = 1240;
   const height = 1754;
@@ -202,6 +203,21 @@ export async function renderDocumentToCanvasPng(params: {
     ctx.fillText(params.signatureFooter, marginX, footerY);
   }
 
+  const watermark =
+    params.watermark === undefined
+      ? 'Addis-Vault Protected • Single-User License'
+      : params.watermark;
+  if (watermark) {
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate(-Math.PI / 7.5);
+    ctx.fillStyle = 'rgba(120, 113, 108, 0.30)';
+    ctx.font = '700 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(watermark, 0, 0, width - marginX * 2);
+    ctx.restore();
+  }
+
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1] || '';
   const binaryStr = atob(base64);
@@ -219,6 +235,7 @@ export async function renderDocumentToCanvasPng(params: {
 export async function buildRealPdfBytes(params: {
   sourcePdfBytes?: Uint8Array | null;
   acroFormValues?: Record<string, string>;
+  watermark?: string | null;
   pages: {
     title: string;
     subtitle?: string;
@@ -228,6 +245,29 @@ export async function buildRealPdfBytes(params: {
     photoDataUrl?: string;
   }[];
 }): Promise<Uint8Array> {
+  const watermark =
+    params.watermark === undefined
+      ? 'Addis-Vault Protected • Single-User License'
+      : params.watermark;
+
+  const saveWithWatermark = async (pdfDoc: PDFDocument) => {
+    if (watermark) {
+      const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      for (const page of pdfDoc.getPages()) {
+        page.drawText(watermark, {
+          x: 54,
+          y: page.getHeight() / 2,
+          size: 14,
+          font,
+          color: rgb(0.55, 0.53, 0.5),
+          opacity: 0.38,
+          rotate: degrees(-24),
+        });
+      }
+    }
+    return pdfDoc.save();
+  };
+
   if (params.sourcePdfBytes) {
     try {
       const pdfDoc = await PDFDocument.load(params.sourcePdfBytes, {
@@ -256,7 +296,10 @@ export async function buildRealPdfBytes(params: {
 
       // Also embed the clean edited summary / filled sheet page(s) inside the PDF
       for (const pageSpec of params.pages) {
-        const { bytes: pngBytes } = await renderDocumentToCanvasPng(pageSpec);
+        const { bytes: pngBytes } = await renderDocumentToCanvasPng({
+          ...pageSpec,
+          watermark: null,
+        });
         const pngImage = await pdfDoc.embedPng(pngBytes);
         const page = pdfDoc.addPage([595.28, 841.89]);
         page.drawImage(pngImage, {
@@ -267,7 +310,7 @@ export async function buildRealPdfBytes(params: {
         });
       }
 
-      return await pdfDoc.save();
+      return await saveWithWatermark(pdfDoc);
     } catch {
       // Fallback to fresh PDF generation if uploaded bytes couldn't be merged
     }
@@ -275,7 +318,10 @@ export async function buildRealPdfBytes(params: {
 
   const pdfDoc = await PDFDocument.create();
   for (const pageSpec of params.pages) {
-    const { bytes: pngBytes } = await renderDocumentToCanvasPng(pageSpec);
+    const { bytes: pngBytes } = await renderDocumentToCanvasPng({
+      ...pageSpec,
+      watermark: null,
+    });
     const pngImage = await pdfDoc.embedPng(pngBytes);
     const page = pdfDoc.addPage([595.28, 841.89]);
     page.drawImage(pngImage, {
@@ -285,7 +331,7 @@ export async function buildRealPdfBytes(params: {
       height: 841.89,
     });
   }
-  return await pdfDoc.save();
+  return await saveWithWatermark(pdfDoc);
 }
 
 export async function inspectUploadedPdf(bytes: Uint8Array): Promise<{

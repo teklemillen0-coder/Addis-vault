@@ -18,6 +18,19 @@ Create a production build with:
 npm run build
 ```
 
+## Android APK
+
+The Capacitor Android app loads `https://workers.dev` and uses Android `FLAG_SECURE` to block
+system screenshots and screen recordings. Build locally with `npx cap sync android`, then run
+`cd android && ./gradlew assembleDebug`. Pushes to `main` build the debug APK in GitHub Actions;
+download it from the `Addis-Vault-APK` workflow artifact.
+
+Paid reader access is associated with the browser/app installation device ID. Copy, context-menu,
+and print actions are blocked in protected views; browser builds cannot reliably prevent all
+screen capture. Generated document and video exports carry the Addis-Vault single-user watermark
+unless the separate watermark-removal add-on is included at checkout (free for the verified
+Owner).
+
 ## AI App Builder
 
 Open **App Builder** from the navigation to create or import a project. New workspaces are

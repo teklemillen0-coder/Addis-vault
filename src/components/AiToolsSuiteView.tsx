@@ -306,7 +306,8 @@ export const AiToolsSuiteView: React.FC<AiToolsSuiteViewProps> = ({
 
     if (format === 'excel') {
       const csv = markdownToCsv(textToExport, activeTool.title[lang]);
-      triggerBlobDownload(`addisvault-${safeSlug}.csv`, csv, 'text/csv;charset=utf-8');
+      const watermarkedCsv = `\uFEFF"Addis-Vault Protected • Single-User License",""\n${csv.replace(/^\uFEFF/, '')}`;
+      triggerBlobDownload(`addisvault-${safeSlug}.csv`, watermarkedCsv, 'text/csv;charset=utf-8');
       return;
     }
 
@@ -321,6 +322,7 @@ export const AiToolsSuiteView: React.FC<AiToolsSuiteViewProps> = ({
     .hdr h1 { margin: 0 0 4px 0; font-size: 20px; color: #065f46; }
     .hdr p { margin: 0; font-size: 12px; color: #57534e; }
     pre { white-space: pre-wrap; font-family: inherit; font-size: 13.5px; background: #fafaf9; border: 1px solid #e7e5e4; padding: 18px; border-radius: 8px; }
+    body::before { content: "Addis-Vault Protected • Single-User License"; position: fixed; z-index: 999; top: 44%; left: -8%; width: 116%; text-align: center; transform: rotate(-24deg); color: rgba(120,113,108,.32); font: 700 22px/1.2 sans-serif; pointer-events: none; }
     @media print { .no-print { display: none; } }
   </style>
 </head>

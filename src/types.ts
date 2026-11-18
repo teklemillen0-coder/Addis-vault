@@ -201,6 +201,7 @@ export interface PurchaseOrder {
   promoCode?: string;
   buyerContact?: string;
   deviceId?: string;
+  watermarkRemoval?: boolean;
   isVipOrder?: boolean;
   vipPlanId?: 'monthly' | 'annual';
   aiToolId?: string;

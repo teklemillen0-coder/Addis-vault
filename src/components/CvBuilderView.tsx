@@ -30,7 +30,9 @@ interface CvBuilderViewProps {
   lang: Language;
   watermarkId: string;
   unlockedCvCountryIds: Set<string>;
+  watermarkRemovedCvCountryIds: Set<string>;
   vipActive: boolean;
+  ownerAccess: boolean;
   onRequestCheckout: (standard: CvCountryStandard) => void;
   onOpenVipModal: () => void;
 }
@@ -51,7 +53,9 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
   lang,
   watermarkId,
   unlockedCvCountryIds,
+  watermarkRemovedCvCountryIds,
   vipActive,
+  ownerAccess,
   onRequestCheckout,
   onOpenVipModal,
 }) => {
@@ -101,6 +105,9 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
     });
   }, [countryRegionFilter, countrySearch, lang]);
   const isUnlocked = vipActive || unlockedCvCountryIds.has(standard.id);
+  const isWatermarkRemoved =
+    ownerAccess || watermarkRemovedCvCountryIds.has(standard.id);
+  const watermarkText = 'Addis-Vault Protected • Single-User License';
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,6 +222,12 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
     h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #065f46; border-bottom: 1.5px solid #065f46; padding-bottom: 4px; margin: 20px 0 10px; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #1c1917; padding-bottom: 14px; }
     .page-break { page-break-before: always; margin-top: 44px; padding-top: 28px; border-top: 2px dashed #d6d3d1; }
+    ${
+      isWatermarkRemoved
+        ? ''
+        : `body { position: relative; }
+    body::before { content: "${watermarkText}"; position: fixed; z-index: 999; top: 44%; left: -8%; width: 116%; text-align: center; transform: rotate(-24deg); color: rgba(120, 113, 108, .32); font: 700 22px/1.2 sans-serif; pointer-events: none; }`
+    }
     @media print { body { margin: 16px auto; } .page-break { border-top: none; } }
   </style>
 </head>
@@ -311,6 +324,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
       }
 
       const pdfBytes = await buildRealPdfBytes({
+        watermark: isWatermarkRemoved ? null : watermarkText,
         pages: [
           {
             title: fullName || 'Applicant Name',
@@ -735,14 +749,18 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
                 <span>{t.cvFullscreenPreviewBtn}</span>
               </button>
               <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                {isUnlocked ? 'EXPORT UNLOCKED' : `Download Fee: ${standard.priceEtb} ETB`}
+                {isWatermarkRemoved
+                  ? 'WATERMARK REMOVED'
+                  : isUnlocked
+                    ? 'WATERMARKED EXPORT UNLOCKED'
+                    : `Download Fee: ${standard.priceEtb} ETB`}
               </span>
             </div>
           </div>
 
           {/* Paper Sheet Preview (Watermarked & Copy-protected prior to unlock) */}
           <ProtectedContent
-            watermark={`Addis-Vault CV Preview · ${watermarkId}`}
+            watermark={`${watermarkText} · ${watermarkId}`}
             className="overflow-hidden rounded-2xl border border-stone-200 bg-white p-6 text-stone-900 shadow-sm sm:p-7"
           >
             {!isUnlocked && (
@@ -938,7 +956,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
                 {standard.flagCode} · {standard.countryName[lang]}
               </div>
               <div className="text-sm font-bold">
-                {isUnlocked ? 'Final Clean CV & Cover Letter' : t.cvWatermarkDraftBanner}
+                {isUnlocked ? 'CV & Cover Letter Export' : t.cvWatermarkDraftBanner}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -989,7 +1007,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
 
           <div className="flex-1 overflow-y-auto p-4 sm:p-8">
             <ProtectedContent
-              watermark={`Addis-Vault CV Preview · ${watermarkId}`}
+              watermark={`${watermarkText} · ${watermarkId}`}
               className="mx-auto max-w-3xl space-y-6"
             >
               {/* Sheet 1: CV */}

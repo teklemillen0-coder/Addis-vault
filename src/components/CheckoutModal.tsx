@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Building2,
   Check,
@@ -13,7 +13,7 @@ import {
   Smartphone,
   X,
 } from 'lucide-react';
-import { OWNER_PAYMENT_ACCOUNTS } from '../constants/payment';
+import { OWNER_PAYMENT_ACCOUNTS, WATERMARK_REMOVAL_FEE_ETB } from '../constants/payment';
 import { OWNER_SUPPORT_CONTACTS } from '../constants/support';
 import {
   AdConfig,
@@ -41,6 +41,7 @@ import { AdSlot } from './AdSlot';
 interface CheckoutModalProps {
   isOpen: boolean;
   lang: Language;
+  ownerAccess?: boolean;
   items: { product: DigitalProduct; quantity: number }[];
   pendingVipPlan?: VipPlan | null;
   pendingAiTool?: AiToolDefinition | null;
@@ -73,6 +74,7 @@ interface CheckoutModalProps {
     linkDownload?: PendingLinkDownload | null;
     pdfExport?: PendingPdfExport | null;
     service?: PendingService | null;
+    watermarkRemoval: boolean;
   }) => PurchaseOrder;
   onOpenInVault: (product: DigitalProduct, order: PurchaseOrder) => void;
   onGoToDownloads: () => void;
@@ -90,6 +92,7 @@ interface CheckoutModalProps {
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   lang,
+  ownerAccess = false,
   items,
   pendingVipPlan = null,
   pendingAiTool = null,
@@ -121,6 +124,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [refError, setRefError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<'telebirr' | 'cbe' | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<PurchaseOrder | null>(null);
+  const [includeWatermarkRemoval, setIncludeWatermarkRemoval] = useState(false);
+
+  const watermarkRemovalAvailable = Boolean(
+    pendingCvStandard ||
+      (pendingService &&
+        (pendingService.kind === 'video_studio' || pendingService.kind === 'ad_studio'))
+  );
+
+  useEffect(() => {
+    setIncludeWatermarkRemoval(false);
+  }, [pendingCvStandard?.id, pendingService?.id]);
 
   if (!isOpen) return null;
 
@@ -138,9 +152,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     service: pendingService,
   });
 
-  const effectiveSubtotal = verified.subtotalEtb;
+  const watermarkRemoval = ownerAccess || (watermarkRemovalAvailable && includeWatermarkRemoval);
+  const watermarkRemovalFee =
+    watermarkRemoval && !ownerAccess ? WATERMARK_REMOVAL_FEE_ETB : 0;
+  const effectiveSubtotal = verified.subtotalEtb + watermarkRemovalFee;
   const effectiveDiscount = verified.discountEtb;
-  const effectiveTotal = verified.totalEtb;
+  const effectiveTotal = verified.totalEtb + watermarkRemovalFee;
 
   const handleCopy = async (key: 'telebirr' | 'cbe', value: string) => {
     try {
@@ -181,6 +198,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       linkDownload: pendingLinkDownload,
       pdfExport: pendingPdfExport,
       service: pendingService,
+      watermarkRemoval,
     });
     setConfirmedOrder(order);
   };
@@ -519,6 +537,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </p>
 
               {/* Amount Banner (Verified Price) */}
+              {watermarkRemovalAvailable && (
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-300/80 bg-amber-50/60 p-4 text-sm dark:border-amber-700/50 dark:bg-amber-950/20">
+                  <input
+                    type="checkbox"
+                    checked={ownerAccess || includeWatermarkRemoval}
+                    disabled={ownerAccess}
+                    onChange={(event) => setIncludeWatermarkRemoval(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-emerald-700"
+                  />
+                  <span>
+                    <span className="block font-semibold text-stone-900 dark:text-stone-100">
+                      Remove Watermark / የውሃ ምልክት ማንሻ
+                    </span>
+                    <span className="mt-1 block text-xs text-stone-600 dark:text-stone-300">
+                      {ownerAccess
+                        ? 'Included free for the verified Owner account.'
+                        : `Optional clean CV/video export · Extra fee ${WATERMARK_REMOVAL_FEE_ETB} ETB.`}
+                    </span>
+                  </span>
+                </label>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 py-4 dark:border-emerald-900/60 dark:bg-emerald-950/30">
                 <div>
                   <div className="text-xs font-medium text-emerald-900/75 dark:text-emerald-300/80">

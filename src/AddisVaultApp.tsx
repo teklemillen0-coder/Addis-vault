@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useCatalog } from "./data/catalogStore";
 import { DEFAULT_AD_CONFIG } from "./constants/ads";
-import { getPromoDiscountPercent } from "./constants/payment";
+import { getPromoDiscountPercent, WATERMARK_REMOVAL_FEE_ETB } from "./constants/payment";
 import { OWNER_SUPPORT_CONTACTS } from "./constants/support";
 import { AI_TOOLS_LIST } from "./constants/aiTools";
 import { OWNER_DEFAULT_PROFILE } from "./constants/pdfAndCommunity";
@@ -861,6 +861,20 @@ export default function App() {
     return set;
   }, [orders, deviceId]);
 
+  const watermarkRemovedCvCountryIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (
+        isOrderBoundToCurrentDevice(order, deviceId) &&
+        order.watermarkRemoval &&
+        order.cvCountryId
+      ) {
+        set.add(order.cvCountryId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
   const unlockedLegalDocIds = useMemo(() => {
     const set = new Set<string>();
     for (const order of orders) {
@@ -905,6 +919,20 @@ export default function App() {
     const set = new Set<string>();
     for (const order of orders) {
       if (isOrderBoundToCurrentDevice(order, deviceId) && order.serviceId) {
+        set.add(order.serviceId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const watermarkRemovedServiceIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (
+        isOrderBoundToCurrentDevice(order, deviceId) &&
+        order.watermarkRemoval &&
+        order.serviceId
+      ) {
         set.add(order.serviceId);
       }
     }
@@ -1206,6 +1234,7 @@ export default function App() {
     linkDownload,
     pdfExport,
     service,
+    watermarkRemoval,
   }: {
     paymentMethod: PaymentMethod;
     refNumber: string;
@@ -1221,6 +1250,7 @@ export default function App() {
     linkDownload?: PendingLinkDownload | null;
     pdfExport?: PendingPdfExport | null;
     service?: PendingService | null;
+    watermarkRemoval?: boolean;
   }): PurchaseOrder => {
     const cleanRef = sanitizeUserInput(refNumber, 64);
     const cleanContact = buyerContact ? sanitizeUserInput(buyerContact, 80) : undefined;
@@ -1228,6 +1258,14 @@ export default function App() {
     if (service) {
       const svcOrderId = `AV-SVC-${Date.now().toString().slice(-6)}`;
       const verified = verifyCheckoutAmount({ cartItems: [], promoCode: null, service });
+      const cleanExportSelected =
+        ownerAccess ||
+        (Boolean(watermarkRemoval) &&
+          (service.kind === "video_studio" || service.kind === "ad_studio"));
+      const watermarkRemovalFee =
+        cleanExportSelected && !ownerAccess ? WATERMARK_REMOVAL_FEE_ETB : 0;
+      const serviceSubtotalEtb = verified.subtotalEtb + watermarkRemovalFee;
+      const serviceTotalEtb = verified.totalEtb + watermarkRemovalFee;
       const svcOrder: PurchaseOrder = {
         id: svcOrderId,
         refNumber: cleanRef,
@@ -1238,19 +1276,20 @@ export default function App() {
             sku: service.kind.toUpperCase(),
             titleSnapshot: service.title,
             category: "business_ideas",
-            priceEtb: verified.totalEtb,
+            priceEtb: serviceTotalEtb,
             quantity: 1,
           },
         ],
-        subtotalEtb: verified.subtotalEtb,
+        subtotalEtb: serviceSubtotalEtb,
         discountEtb: 0,
-        totalEtb: verified.totalEtb,
+        totalEtb: serviceTotalEtb,
         buyerContact: cleanContact,
         deviceId,
         serviceId: service.id,
         serviceKind: service.kind,
-        servicePriceEtb: verified.totalEtb,
-        integritySig: computeIntegritySig(`${svcOrderId}:${verified.totalEtb}:${cleanRef}`),
+        servicePriceEtb: serviceTotalEtb,
+        watermarkRemoval: cleanExportSelected,
+        integritySig: computeIntegritySig(`${svcOrderId}:${serviceTotalEtb}:${cleanRef}`),
         createdAt: new Date().toISOString(),
       };
       setOrders((prev) => [svcOrder, ...prev]);
@@ -1346,6 +1385,11 @@ export default function App() {
         promoCode: null,
         cvCountryId: cvStandard.id,
       });
+      const cleanExportSelected = ownerAccess || Boolean(watermarkRemoval);
+      const watermarkRemovalFee =
+        cleanExportSelected && !ownerAccess ? WATERMARK_REMOVAL_FEE_ETB : 0;
+      const cvSubtotalEtb = verified.subtotalEtb + watermarkRemovalFee;
+      const cvTotalEtb = verified.totalEtb + watermarkRemovalFee;
       const cvOrder: PurchaseOrder = {
         id: cvOrderId,
         refNumber: cleanRef,
@@ -1356,17 +1400,18 @@ export default function App() {
             sku: `CV-${cvStandard.id.toUpperCase()}`,
             titleSnapshot: `${cvStandard.countryName[lang]} — ${cvStandard.formatLabel[lang]}`,
             category: "business_diaspora",
-            priceEtb: verified.totalEtb,
+            priceEtb: cvTotalEtb,
             quantity: 1,
           },
         ],
-        subtotalEtb: verified.subtotalEtb,
+        subtotalEtb: cvSubtotalEtb,
         discountEtb: 0,
-        totalEtb: verified.totalEtb,
+        totalEtb: cvTotalEtb,
         buyerContact: cleanContact,
         deviceId,
         cvCountryId: cvStandard.id,
-        integritySig: computeIntegritySig(`${cvOrderId}:${verified.totalEtb}:${cleanRef}`),
+        watermarkRemoval: cleanExportSelected,
+        integritySig: computeIntegritySig(`${cvOrderId}:${cvTotalEtb}:${cleanRef}`),
         createdAt: new Date().toISOString(),
       };
       setOrders((prev) => [cvOrder, ...prev]);
@@ -2734,7 +2779,9 @@ export default function App() {
               lang={lang}
               watermarkId={getShortDeviceTag(deviceId)}
               unlockedCvCountryIds={unlockedCvCountryIds}
+              watermarkRemovedCvCountryIds={watermarkRemovedCvCountryIds}
               vipActive={vipActive}
+              ownerAccess={ownerAccess}
               onRequestCheckout={handleRequestCvCheckout}
               onOpenVipModal={() => setIsVipModalOpen(true)}
             />
@@ -2864,6 +2911,7 @@ export default function App() {
               vipActive={vipActive}
               ownerAccess={ownerAccess}
               unlockedServiceIds={unlockedServiceIds}
+              watermarkRemovedServiceIds={watermarkRemovedServiceIds}
               onRequestServiceCheckout={handleRequestServiceCheckout}
               onOpenVipModal={() => setIsVipModalOpen(true)}
               onTrackAdImpression={handleTrackAdImpression}
@@ -3045,6 +3093,7 @@ export default function App() {
       <CheckoutModal
         isOpen={isCheckoutOpen}
         lang={lang}
+        ownerAccess={ownerAccess}
         items={checkoutSnapshotItems}
         pendingVipPlan={pendingVipPlan}
         pendingAiTool={pendingAiTool}

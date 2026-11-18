@@ -27,6 +27,7 @@ interface VideoStudioViewProps {
   vipActive: boolean;
   ownerAccess?: boolean;
   unlockedServiceIds: Set<string>;
+  watermarkRemovedServiceIds: Set<string>;
   onRequestServiceCheckout: (service: PendingService) => void;
   onOpenVipModal: () => void;
   onTrackAdImpression: () => void;
@@ -101,6 +102,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
   vipActive,
   ownerAccess = false,
   unlockedServiceIds,
+  watermarkRemovedServiceIds,
   onRequestServiceCheckout,
   onOpenVipModal,
   onTrackAdImpression,
@@ -133,6 +135,9 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
       : adStudioPriceEtb(platformCount, durationSec);
 
   const isUnlocked = vipActive || unlockedServiceIds.has(serviceId);
+  const isWatermarkRemoved =
+    ownerAccess || watermarkRemovedServiceIds.has(serviceId);
+  const watermarkText = 'Addis-Vault Protected • Single-User License';
 
   const togglePlatform = (p: string) => {
     setSelectedPlatforms((prev) => {
@@ -195,7 +200,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
     }
   };
 
-  // Animated HTML5 Canvas storyboard renderer (watermarked when unpaid, clean after payment)
+  // Keep the watermark on previews and paid exports unless separately removed.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -255,15 +260,14 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
       ctx.font = '18px sans-serif';
       wrapText(ctx, scene.caption, 32, 200, w - 64, 26);
 
-      // Watermark overlay when unpaid
-      if (!isUnlocked) {
+      if (!isWatermarkRemoved) {
         ctx.save();
         ctx.translate(w / 2, h / 2);
         ctx.rotate(-0.32);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-        ctx.font = 'bold 24px monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
+        ctx.font = 'bold 22px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('ADDISVAULT PREVIEW · PAY TO EXPORT', 0, 0);
+        ctx.fillText(watermarkText, 0, 0, w - 48);
         ctx.restore();
       }
 
@@ -280,7 +284,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
 
     animFrameRef.current = requestAnimationFrame(drawFrame);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [scenes, durationSec, mode, isPlaying, isUnlocked]);
+  }, [scenes, durationSec, mode, isPlaying, isWatermarkRemoved]);
 
   const handleCheckout = () => {
     onRequestServiceCheckout({
@@ -303,7 +307,10 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
       return;
     }
     const slug = (title || 'addisvault-video').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title || 'AddisVault Video'}</title><style>body{font-family:system-ui,sans-serif;max-width:780px;margin:40px auto;padding:0 20px;line-height:1.65;color:#1c1917;}h1{color:#065f46;}pre{white-space:pre-wrap;background:#f5f5f4;padding:16px;border-radius:12px;}</style></head><body><h1>${sanitizeUserInput(title || 'AddisVault Video Production', 120)}</h1><p><strong>Mode:</strong> ${mode} · <strong>Duration:</strong> ${durationSec}s · <strong>Style:</strong> ${visualStyle}</p><pre>${sanitizeUserInput(scriptOutput || scenes.map((s, i) => `Scene ${i + 1}: ${s.headline} — ${s.caption}`).join('\n'), 15000)}</pre></body></html>`;
+    const watermarkStyle = isWatermarkRemoved
+      ? ''
+      : `body::before{content:"${watermarkText}";position:fixed;z-index:999;top:44%;left:-8%;width:116%;text-align:center;transform:rotate(-24deg);color:rgba(120,113,108,.32);font:700 22px/1.2 sans-serif;pointer-events:none;}`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title || 'AddisVault Video'}</title><style>body{font-family:system-ui,sans-serif;max-width:780px;margin:40px auto;padding:0 20px;line-height:1.65;color:#1c1917;}h1{color:#065f46;}pre{white-space:pre-wrap;background:#f5f5f4;padding:16px;border-radius:12px;}${watermarkStyle}</style></head><body><h1>${sanitizeUserInput(title || 'AddisVault Video Production', 120)}</h1><p><strong>Mode:</strong> ${mode} · <strong>Duration:</strong> ${durationSec}s · <strong>Style:</strong> ${visualStyle}</p><pre>${sanitizeUserInput(scriptOutput || scenes.map((s, i) => `Scene ${i + 1}: ${s.headline} — ${s.caption}`).join('\n'), 15000)}</pre></body></html>`;
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -388,7 +395,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
           <p className="mt-1.5 max-w-3xl text-sm text-stone-600 dark:text-stone-400">
             {ownerAccess
               ? "Owner access includes unlimited free clean video exports, scripts, storyboards, and share packages."
-              : "Create animated storyboards, marketing scripts, and HD motion previews for free. Unlock clean watermark-free WebM video exports & share packages for 50–500+ ETB (or free with VIP)."}
+              : "Create animated storyboards, marketing scripts, and HD motion previews for free. Pay to unlock exports; watermark removal is a separate 200 ETB add-on (free for the verified Owner)."}
           </p>
         </div>
 
@@ -558,6 +565,10 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   <span>WATERMARK REMOVED</span>
                 </span>
+              ) : isUnlocked ? (
+                <span className="font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
+                  Watermarked export unlocked
+                </span>
               ) : (
                 <span className="font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
                   {ownerAccess ? "Owner export: Free" : `Export Fee: ${currentPriceEtb.toLocaleString()} ETB`}
@@ -566,7 +577,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
             </div>
 
             <ProtectedContent
-              watermark={`Addis-Vault Video Preview · ${watermarkId}`}
+              watermark={`${watermarkText} · ${watermarkId}`}
               className="space-y-3"
             >
               <div className="overflow-hidden rounded-xl border border-stone-200 bg-zinc-950 dark:border-zinc-800">
@@ -594,7 +605,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
                   className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600"
                 >
                   <Lock className="h-4 w-4" />
-                  <span>Pay {currentPriceEtb.toLocaleString()} ETB to Remove Watermark &amp; Download Video</span>
+                  <span>Unlock export for {currentPriceEtb.toLocaleString()} ETB · optional watermark removal at checkout</span>
                 </button>
                 <button
                   type="button"
@@ -615,7 +626,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
                     className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-60 dark:bg-emerald-600"
                   >
                     <Download className="h-4 w-4" />
-                    <span>{isExportingVideo ? 'Rendering Clean WebM...' : 'Download Clean Video (.webm)'}</span>
+                    <span>{isExportingVideo ? 'Rendering WebM...' : `Download ${isWatermarkRemoved ? 'Clean' : 'Watermarked'} Video (.webm)`}</span>
                   </button>
                   <button
                     type="button"

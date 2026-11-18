@@ -158,6 +158,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
     body { font-family: 'Times New Roman', 'Noto Sans Ethiopic', Georgia, serif; max-width: 780px; margin: 44px auto; padding: 0 28px; color: #111827; line-height: 1.75; font-size: 13.5pt; }
     .court-top { text-align: center; font-weight: bold; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 20px; }
     .meta { font-size: 11pt; color: #374151; margin-bottom: 18px; }
+    body::before { content: "Addis-Vault Protected • Single-User License"; position: fixed; z-index: 999; top: 44%; left: -8%; width: 116%; text-align: center; transform: rotate(-24deg); color: rgba(120,113,108,.32); font: 700 22px/1.2 sans-serif; pointer-events: none; }
     @media print { body { margin: 20mm 22mm; } }
   </style>
 </head>
