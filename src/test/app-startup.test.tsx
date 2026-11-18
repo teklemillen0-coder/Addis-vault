@@ -5,13 +5,14 @@ import AddisVaultApp from "@/AddisVaultApp";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 describe("App startup without Supabase environment variables", () => {
-  it("renders the default app instead of the error boundary", async () => {
+  it("renders the paid default-tool gate instead of the error boundary", () => {
     render(
       <AppErrorBoundary>
         <AddisVaultApp />
       </AppErrorBoundary>,
     );
 
-    expect(await screen.findByRole("heading", { name: "AI App Builder" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /VIP All-Access Pass/ })).toBeInTheDocument();
+    expect(screen.queryByText("Something went wrong while loading the app")).toBeNull();
   });
 });

@@ -96,7 +96,7 @@ export interface LegalConsultationBooking {
   phone: string;
   caseSummary: string;
   refNumber: string;
-  paymentMethod: PaymentMethod | 'free';
+  paymentMethod: PaymentMethod;
   createdAt: string;
 }
 

@@ -39,9 +39,12 @@ import {
 
 interface PdfEditorViewProps {
   lang: Language;
+  vipActive: boolean;
+  unlockedPdfIds: Set<string>;
   lastConfirmedPdfExport: PendingPdfExport | null;
   onConsumeConfirmedPdfExport: () => void;
   onRequestCheckout: (item: PendingPdfExport) => void;
+  onOpenVipModal: () => void;
   onActivityPoint?: (action: 'download') => void;
 }
 
@@ -54,9 +57,12 @@ interface EditableField {
 
 export const PdfEditorView: React.FC<PdfEditorViewProps> = ({
   lang,
+  vipActive,
+  unlockedPdfIds,
   lastConfirmedPdfExport,
   onConsumeConfirmedPdfExport,
   onRequestCheckout,
+  onOpenVipModal,
   onActivityPoint,
 }) => {
   const t = UI_TRANSLATIONS[lang];
@@ -84,7 +90,7 @@ export const PdfEditorView: React.FC<PdfEditorViewProps> = ({
     PDF_EXPORT_TIERS.find((tier) => tier.id === selectedFormatId) || PDF_EXPORT_TIERS[0];
 
   const docHashKey = `${docTitle.trim().slice(0, 32)}_${selectedFormatId}`;
-  const isCurrentFormatUnlocked = true;
+  const isCurrentFormatUnlocked = vipActive || unlockedPdfIds.has(docHashKey);
 
   useEffect(() => {
     return () => {
@@ -682,14 +688,14 @@ export const PdfEditorView: React.FC<PdfEditorViewProps> = ({
                 {t.pdfExportTitle}
               </h2>
               <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                Free
+                {vipActive ? 'VIP 0 ETB' : `${activeExportTier.priceEtb} ETB`}
               </span>
             </div>
 
             <div className="grid gap-2.5 sm:grid-cols-2">
               {PDF_EXPORT_TIERS.map((tier) => {
                 const active = tier.id === selectedFormatId;
-                const unlocked = true;
+                const unlocked = vipActive || unlockedPdfIds.has(`${docTitle.trim().slice(0, 32)}_${tier.id}`);
                 return (
                   <button
                     key={tier.id}
@@ -743,6 +749,16 @@ export const PdfEditorView: React.FC<PdfEditorViewProps> = ({
                 </span>
               </button>
 
+              {!vipActive && (
+                <button
+                  type="button"
+                  onClick={onOpenVipModal}
+                  className="min-h-[46px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  <span>VIP 0 ETB</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

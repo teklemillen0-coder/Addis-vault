@@ -200,15 +200,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="mt-auto pt-5">
           <div className="flex items-baseline justify-between border-t border-stone-100 pt-4 dark:border-zinc-800">
             <span className="font-mono text-lg font-bold tabular-nums text-emerald-800 dark:text-emerald-400">
-              {isUnlocked ? 'Free' : `${product.priceEtb.toLocaleString()} ETB`}
+              {product.priceEtb.toLocaleString()} ETB
             </span>
             {isUnlocked ? (
-              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                Free access
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                {t.unlockedLabel}
               </span>
             ) : (
               <span className="text-[11px] font-semibold text-amber-700/90 dark:text-amber-400/90">
-                {lang === 'am' ? 'ለሁሉም ነፃ' : 'Free for everyone'}
+                {lang === 'am' ? 'በVIP ነፃ' : 'Free with VIP'}
               </span>
             )}
           </div>

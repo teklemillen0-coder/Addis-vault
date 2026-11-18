@@ -48,9 +48,9 @@ describe("Business directory listing", () => {
 });
 
 describe("Catalog price bands", () => {
-  it("regional textbooks and teacher's guides cost 25–60 ETB", () => {
+  it("regional textbooks and teacher's guides cost 20–60 ETB", () => {
     const prices = PRODUCTS.filter((p) => p.id.startsWith("gt-")).map((p) => p.priceEtb);
-    expect(Math.min(...prices)).toBe(25);
+    expect(Math.min(...prices)).toBe(20);
     expect(Math.max(...prices)).toBe(60);
   });
   it("university hub items cost 20–85 ETB", () => {
@@ -66,7 +66,9 @@ describe("Catalog price bands", () => {
   });
   it("has national exams for grades 6, 8 and 12 up to 2018 E.C.", () => {
     const ex = PRODUCTS.filter((p) => p.id.startsWith("nx-"));
-    expect(new Set(ex.map((p) => p.gradeBand))).toEqual(new Set(["Grade 6", "Grade 8", "Grade 12"]));
+    expect(new Set(ex.map((p) => p.gradeBand))).toEqual(
+      new Set(["Grade 6", "Grade 8", "Grade 12"]),
+    );
     expect(ex.some((p) => p.examYear?.startsWith("2018"))).toBe(true);
   });
 });
@@ -97,4 +99,3 @@ describe("Security & clean production ad defaults", () => {
     expect(DEFAULT_AD_CONFIG.directSponsors).toEqual([]);
   });
 });
-

@@ -101,6 +101,7 @@ import { ProductCard } from "./components/ProductCard";
 import { ProductModal } from "./components/ProductModal";
 import { CartDrawer } from "./components/CartDrawer";
 import { CheckoutModal } from "./components/CheckoutModal";
+import { GrowthSection } from "./components/GrowthSection";
 import { OwnerActionBar, OwnerItemEditor } from "./components/OwnerControls";
 import { PWAInstallModal } from "./components/PWAInstallModal";
 import { OfflineIndicator } from "./components/OfflineIndicator";
@@ -109,6 +110,7 @@ import { MissingFileModal } from "./components/MissingFileModal";
 import { SecureVaultReaderModal } from "./components/SecureVaultReaderModal";
 import { MemberAuthModal } from "./components/MemberAuthModal";
 import { VerifiedOwnerModal } from "./components/VerifiedOwnerModal";
+import { VipPassModal } from "./components/VipPassModal";
 
 const DownloadsView = lazy(() =>
   import("./components/DownloadsView").then((module) => ({ default: module.DownloadsView })),
@@ -355,6 +357,9 @@ export default function App() {
     }
     return created;
   });
+  const [referralCreditsEtb, setReferralCreditsEtb] = useState<number>(() =>
+    readStorage("addisvault_ref_credits", 0),
+  );
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [referralBannerVisible, setReferralBannerVisible] = useState(false);
   const [tokenSecurityError, setTokenSecurityError] = useState(false);
@@ -385,6 +390,7 @@ export default function App() {
   } | null>(null);
   const [isPWAModalOpen, setIsPWAModalOpen] = useState(false);
   const [isMissingFileOpen, setIsMissingFileOpen] = useState(false);
+  const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isMemberAuthOpen, setIsMemberAuthOpen] = useState(false);
   const [isVerifiedOwnerOpen, setIsVerifiedOwnerOpen] = useState(false);
   const [activeVaultSession, setActiveVaultSession] = useState<{
@@ -491,6 +497,14 @@ export default function App() {
   useEffect(() => {
     sealEncryptedStorage("addisvault_consults", consultBookings);
   }, [consultBookings]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("addisvault_ref_credits", JSON.stringify(referralCreditsEtb));
+    } catch {
+      // Ignore storage failures in private browsing
+    }
+  }, [referralCreditsEtb]);
 
   useEffect(() => {
     try {
@@ -813,9 +827,87 @@ export default function App() {
   const vipActive = isVipActiveOnCurrentDevice(vipSubscription, deviceId);
 
   const unlockedIds = useMemo(() => {
-    return new Set(catalog.map((product) => product.id));
-  }, [catalog]);
-  const unlockedAiToolIds = useMemo(() => new Set(AI_TOOLS_LIST.map((tool) => tool.id)), []);
+    const set = new Set<string>();
+    if (vipActive) {
+      for (const product of catalog) set.add(product.id);
+      return set;
+    }
+    for (const order of orders) {
+      if (!isOrderBoundToCurrentDevice(order, deviceId)) continue;
+      for (const item of order.items) set.add(item.productId);
+    }
+    return set;
+  }, [orders, vipActive, deviceId, catalog]);
+
+  const unlockedAiToolIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.aiToolId) {
+        set.add(order.aiToolId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const unlockedCvCountryIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.cvCountryId) {
+        set.add(order.cvCountryId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const unlockedLegalDocIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.legalDocId) {
+        set.add(order.legalDocId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const unlockedConsultTierIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.legalConsultTierId) {
+        set.add(order.legalConsultTierId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const unlockedLinkIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.linkDownloadId) {
+        set.add(order.linkDownloadId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const unlockedPdfIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.pdfExportId) {
+        set.add(order.pdfExportId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
+
+  const unlockedServiceIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const order of orders) {
+      if (isOrderBoundToCurrentDevice(order, deviceId) && order.serviceId) {
+        set.add(order.serviceId);
+      }
+    }
+    return set;
+  }, [orders, deviceId]);
 
   const awardMemberActivity = useCallback((kind: "download" | "purchase" | "chat" | "referral") => {
     setCurrentMember((prev) => {
@@ -1468,6 +1560,11 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
 
+    if (appliedPromo && /^AV[A-Z0-9]{4,}$/.test(appliedPromo)) {
+      setReferralCreditsEtb((prev) => prev + Math.round(verifiedCart.totalEtb * 0.15));
+      awardMemberActivity("referral");
+    }
+
     setOrders((prev) => [newOrder, ...prev]);
     setCart([]);
     setAppliedPromo(null);
@@ -1506,6 +1603,14 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
+  const handleSelectVipPlanCheckout = (plan: VipPlan) => {
+    clearPendingNonCartCheckout();
+    setPendingVipPlan(plan);
+    setCheckoutSnapshotItems([]);
+    setIsVipModalOpen(false);
+    setIsCheckoutOpen(true);
+  };
+
   const handleRequestAiToolCheckout = (tool: AiToolDefinition) => {
     clearPendingNonCartCheckout();
     setPendingAiTool(tool);
@@ -1531,26 +1636,10 @@ export default function App() {
     tier: LegalConsultTier,
     intake: { clientName: string; phone: string; branch: string; caseSummary: string },
   ) => {
-    const now = new Date().toISOString();
-    const bookingId = `AVLAW-${Date.now()}`;
-    const booking: LegalConsultationBooking = {
-      id: bookingId,
-      bookingCode: bookingId,
-      tierId: tier.id,
-      tierTitle: tier.title[lang],
-      priceEtb: 0,
-      branch: sanitizeUserInput(intake.branch, 100),
-      clientName: sanitizeUserInput(intake.clientName, 80),
-      phone: sanitizeUserInput(intake.phone, 24),
-      caseSummary: sanitizeUserInput(intake.caseSummary, 1000),
-      refNumber: "FREE",
-      paymentMethod: "free",
-      createdAt: now,
-    };
-    return submitLegalConsultation({ data: { ...booking } }).then((result) => {
-      if (!result.ok) throw new Error(result.error);
-      setConsultBookings((prev) => [booking, ...prev]);
-    });
+    clearPendingNonCartCheckout();
+    setPendingLegalConsult({ tier, intake });
+    setCheckoutSnapshotItems([]);
+    setIsCheckoutOpen(true);
   };
 
   const handleRequestLinkCheckout = (item: PendingLinkDownload) => {
@@ -1775,6 +1864,8 @@ export default function App() {
         onChangeLang={setLang}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
+        cartCount={cartCount}
+        onOpenCart={() => setIsCartOpen(true)}
         downloadsCount={unlockedIds.size}
         theme={theme}
         onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
@@ -1840,17 +1931,33 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === "app_builder" && (
-            <Suspense
-              fallback={
-                <div className="mx-auto max-w-7xl px-4 py-12 text-center text-sm text-stone-500">
-                  Loading App Builder…
-                </div>
-              }
-            >
-              <AppBuilderView ownerAdmin={ownerMode && Boolean(account?.isAdmin)} />
-            </Suspense>
-          )}
+          {activeTab === "app_builder" &&
+            (vipActive ? (
+              <Suspense
+                fallback={
+                  <div className="mx-auto max-w-7xl px-4 py-12 text-center text-sm text-stone-500">
+                    Loading App Builder…
+                  </div>
+                }
+              >
+                <AppBuilderView ownerAdmin={ownerMode && Boolean(account?.isAdmin)} />
+              </Suspense>
+            ) : (
+              <section className="mx-auto max-w-xl px-4 py-16 text-center">
+                <Crown className="mx-auto h-10 w-10 text-amber-500" />
+                <h1 className="mt-4 font-display text-xl font-bold">{t.vipModalTitle}</h1>
+                <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+                  {t.vipModalSubtitle}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsVipModalOpen(true)}
+                  className="mt-5 min-h-[44px] rounded-xl bg-amber-600 px-5 text-sm font-bold text-white"
+                >
+                  {t.vipBtnLabel}
+                </button>
+              </section>
+            ))}
 
           {activeTab === "marketplace" && (
             <>
@@ -1887,6 +1994,14 @@ export default function App() {
                         <Link2 className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                         <span>{t.heroLinkToolCta}</span>
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsVipModalOpen(true)}
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-50/70 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
+                      >
+                        <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <span>{vipActive ? t.vipActiveTitle : t.vipBtnLabel}</span>
+                      </button>
                       {!isInstalled && (
                         <button
                           type="button"
@@ -1911,7 +2026,10 @@ export default function App() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-100">
                         <span className="font-mono font-semibold text-amber-300">
-                          Free public access
+                          Telebirr 0925695197
+                        </span>
+                        <span className="font-mono font-semibold text-emerald-300">
+                          CBE 1000211261513
                         </span>
                       </div>
                     </div>
@@ -1929,6 +2047,15 @@ export default function App() {
                   onTrackClick={handleTrackAdClick}
                 />
               </div>
+
+              <GrowthSection
+                lang={lang}
+                referralCode={referralCode}
+                referralCreditsEtb={referralCreditsEtb}
+                productsById={productsById}
+                onAddBundleToCart={handleAddBundleToCart}
+                onOpenVipModal={() => setIsVipModalOpen(true)}
+              />
 
               {/* Dismissible Bilingual 3-Step Welcome Guide */}
               {!welcomeDismissed && (
@@ -2479,6 +2606,7 @@ export default function App() {
               unlockedToolIds={unlockedAiToolIds}
               vipActive={vipActive}
               onRequestCheckout={handleRequestAiToolCheckout}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
               adConfig={adConfig}
               onTrackAdImpression={handleTrackAdImpression}
               onTrackAdClick={handleTrackAdClick}
@@ -2507,9 +2635,12 @@ export default function App() {
             <SmartLinkDownloaderView
               lang={lang}
               adConfig={adConfig}
+              vipActive={vipActive}
+              unlockedLinkIds={unlockedLinkIds}
               lastConfirmedLinkDownload={lastConfirmedLinkDownload}
               onConsumeConfirmedLinkDownload={() => setLastConfirmedLinkDownload(null)}
               onRequestCheckout={handleRequestLinkCheckout}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
               onTrackAdImpression={handleTrackAdImpression}
               onTrackAdClick={handleTrackAdClick}
             />
@@ -2518,9 +2649,13 @@ export default function App() {
           {activeTab === "downloads" && (
             <DownloadsView
               lang={lang}
+              orders={orders}
+              productsById={productsById}
               allProducts={catalog}
+              vipSubscription={vipSubscription}
               onOpenInVault={(prod, ord) => handleOpenInVault(prod, ord)}
               onBrowseMarketplace={() => setActiveTab("marketplace")}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
               adConfig={adConfig}
               onTrackAdImpression={handleTrackAdImpression}
               onTrackAdClick={handleTrackAdClick}
@@ -2528,15 +2663,24 @@ export default function App() {
           )}
 
           {activeTab === "cv_studio" && (
-            <CvBuilderView lang={lang} onRequestCheckout={handleRequestCvCheckout} />
+            <CvBuilderView
+              lang={lang}
+              unlockedCvCountryIds={unlockedCvCountryIds}
+              vipActive={vipActive}
+              onRequestCheckout={handleRequestCvCheckout}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
+            />
           )}
 
           {activeTab === "pdf_editor" && (
             <PdfEditorView
               lang={lang}
+              vipActive={vipActive}
+              unlockedPdfIds={unlockedPdfIds}
               lastConfirmedPdfExport={lastConfirmedPdfExport}
               onConsumeConfirmedPdfExport={() => setLastConfirmedPdfExport(null)}
               onRequestCheckout={handleRequestPdfCheckout}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
               onActivityPoint={(action) => awardMemberActivity(action)}
             />
           )}
@@ -2559,9 +2703,13 @@ export default function App() {
           {activeTab === "legal_suite" && (
             <LegalSuiteView
               lang={lang}
+              unlockedLegalDocIds={unlockedLegalDocIds}
+              unlockedConsultTierIds={unlockedConsultTierIds}
               consultBookings={consultBookings}
+              vipActive={vipActive}
               onRequestDocCheckout={handleRequestLegalDocCheckout}
               onRequestConsultCheckout={handleRequestConsultCheckout}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
             />
           )}
 
@@ -2644,6 +2792,10 @@ export default function App() {
             <VideoStudioView
               lang={lang}
               adConfig={adConfig}
+              vipActive={vipActive}
+              unlockedServiceIds={unlockedServiceIds}
+              onRequestServiceCheckout={handleRequestServiceCheckout}
+              onOpenVipModal={() => setIsVipModalOpen(true)}
               onTrackAdImpression={handleTrackAdImpression}
               onTrackAdClick={handleTrackAdClick}
             />
@@ -2878,6 +3030,14 @@ export default function App() {
         adConfig={adConfig}
         onTrackAdImpression={handleTrackAdImpression}
         onTrackAdClick={handleTrackAdClick}
+      />
+
+      <VipPassModal
+        isOpen={isVipModalOpen}
+        lang={lang}
+        vipSubscription={vipSubscription}
+        onClose={() => setIsVipModalOpen(false)}
+        onSelectPlan={handleSelectVipPlanCheckout}
       />
 
       <MissingFileModal

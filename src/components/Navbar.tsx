@@ -16,6 +16,7 @@ import {
   Scale,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Store,
   Sun,
@@ -32,6 +33,8 @@ interface NavbarProps {
   onChangeLang: (lang: Language) => void;
   activeTab: ViewTab;
   onSelectTab: (tab: ViewTab) => void;
+  cartCount: number;
+  onOpenCart: () => void;
   downloadsCount: number;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
@@ -49,6 +52,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onChangeLang,
   activeTab,
   onSelectTab,
+  cartCount,
+  onOpenCart,
   downloadsCount,
   theme,
   onToggleTheme,
@@ -336,6 +341,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
+          <button
+            type="button"
+            onClick={onOpenCart}
+            aria-label={t.cartLabel}
+            className="hidden sm:flex h-9 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-800 transition-colors hover:border-emerald-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-100"
+          >
+            <ShoppingBag className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+            <span className="tabular-nums font-mono text-xs font-semibold text-amber-700 dark:text-amber-400">
+              {cartCount}
+            </span>
+          </button>
+
           {/* Settings compact button */}
           <button
             type="button"
@@ -410,6 +427,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Secondary Utility Strip */}
       <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto border-t border-stone-100 px-4 py-1.5 text-xs dark:border-zinc-900">
+        <button
+          type="button"
+          onClick={onOpenCart}
+          aria-label={t.cartLabel}
+          className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-stone-200 bg-white px-2.5 py-1 font-semibold text-stone-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-300"
+        >
+          <ShoppingBag className="h-3 w-3" />
+          <span>{cartCount}</span>
+        </button>
         {!isInstalled && (
           <button
             type="button"

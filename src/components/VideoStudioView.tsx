@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { generateAiDocument } from '@/lib/ai.functions';
 import {
+  CheckCircle2,
+  Crown,
   Download,
   Film,
   Loader2,
+  Lock,
   Megaphone,
   Pause,
   Play,
@@ -11,13 +14,18 @@ import {
   Sparkles,
   Video,
 } from 'lucide-react';
-import { AdConfig, Language } from '@/types';
+import { AdConfig, Language, PendingService } from '@/types';
 import { checkClientRateLimit, sanitizeUserInput } from '@/utils/appSecurity';
+import { adStudioPriceEtb, videoStudioPriceEtb } from '@/utils/servicePricing';
 import { AdSlot } from './AdSlot';
 
 interface VideoStudioViewProps {
   lang: Language;
   adConfig: AdConfig;
+  vipActive: boolean;
+  unlockedServiceIds: Set<string>;
+  onRequestServiceCheckout: (service: PendingService) => void;
+  onOpenVipModal: () => void;
   onTrackAdImpression: () => void;
   onTrackAdClick: () => void;
 }
@@ -86,6 +94,10 @@ function wrapText(
 export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
   adConfig,
   lang,
+  vipActive,
+  unlockedServiceIds,
+  onRequestServiceCheckout,
+  onOpenVipModal,
   onTrackAdImpression,
   onTrackAdClick,
 }) => {
@@ -96,6 +108,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
   const [durationSec, setDurationSec] = useState(45);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['TikTok', 'YouTube Shorts']);
 
+  const [serviceId, setServiceId] = useState(() => `vs-${Date.now()}`);
   const [scriptOutput, setScriptOutput] = useState<string>('');
   const [scenes, setScenes] = useState<StoryboardScene[]>(() =>
     parseStoryboardScenes('', 'AddisVault Motion Studio')
@@ -103,9 +116,18 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isExportingVideo, setIsExportingVideo] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number>(0);
+
+  const platformCount = Math.max(1, selectedPlatforms.length);
+  const currentPriceEtb =
+    mode === 'video_studio'
+      ? videoStudioPriceEtb(durationSec)
+      : adStudioPriceEtb(platformCount, durationSec);
+
+  const isUnlocked = vipActive || unlockedServiceIds.has(serviceId);
 
   const togglePlatform = (p: string) => {
     setSelectedPlatforms((prev) => {
@@ -128,6 +150,9 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
 
     setErrorMsg(null);
     setIsGenerating(true);
+    const nextServiceId = `${mode === 'video_studio' ? 'vs' : 'ads'}-${Date.now()}`;
+    setServiceId(nextServiceId);
+
     try {
       const res = await generateAiDocument({
         data: {
@@ -165,7 +190,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
     }
   };
 
-  // Animated HTML5 Canvas storyboard renderer.
+  // Animated HTML5 Canvas storyboard renderer (watermarked when unpaid, clean after payment)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -225,6 +250,18 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
       ctx.font = '18px sans-serif';
       wrapText(ctx, scene.caption, 32, 200, w - 64, 26);
 
+      // Watermark overlay when unpaid
+      if (!isUnlocked) {
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(-0.32);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('ADDISVAULT PREVIEW · PAY TO EXPORT', 0, 0);
+        ctx.restore();
+      }
+
       // Bottom progress bar
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
       ctx.fillRect(32, h - 28, w - 64, 6);
@@ -238,9 +275,28 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
 
     animFrameRef.current = requestAnimationFrame(drawFrame);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [scenes, durationSec, mode, isPlaying]);
+  }, [scenes, durationSec, mode, isPlaying, isUnlocked]);
+
+  const handleCheckout = () => {
+    onRequestServiceCheckout({
+      id: serviceId,
+      kind: mode,
+      title:
+        mode === 'video_studio'
+          ? `AI Video Studio (${durationSec}s HD)`
+          : `AI Video Ad Studio (${selectedPlatforms.join('/')})`,
+      params:
+        mode === 'video_studio'
+          ? { durationSec }
+          : { durationSec, platformCount },
+    });
+  };
 
   const handleDownloadStoryboardHtml = () => {
+    if (!isUnlocked) {
+      handleCheckout();
+      return;
+    }
     const slug = (title || 'addisvault-video').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title || 'AddisVault Video'}</title><style>body{font-family:system-ui,sans-serif;max-width:780px;margin:40px auto;padding:0 20px;line-height:1.65;color:#1c1917;}h1{color:#065f46;}pre{white-space:pre-wrap;background:#f5f5f4;padding:16px;border-radius:12px;}</style></head><body><h1>${sanitizeUserInput(title || 'AddisVault Video Production', 120)}</h1><p><strong>Mode:</strong> ${mode} · <strong>Duration:</strong> ${durationSec}s · <strong>Style:</strong> ${visualStyle}</p><pre>${sanitizeUserInput(scriptOutput || scenes.map((s, i) => `Scene ${i + 1}: ${s.headline} — ${s.caption}`).join('\n'), 15000)}</pre></body></html>`;
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -250,6 +306,52 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
     a.download = `${slug}-storyboard.html`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const handleExportCleanWebm = () => {
+    if (!isUnlocked) {
+      handleCheckout();
+      return;
+    }
+    const canvas = canvasRef.current;
+    if (!canvas || typeof MediaRecorder === 'undefined') {
+      handleDownloadStoryboardHtml();
+      return;
+    }
+
+    setIsExportingVideo(true);
+    setIsPlaying(true);
+    try {
+      const stream = canvas.captureStream(24);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+          ? 'video/webm;codecs=vp9'
+          : 'video/webm',
+      });
+      const chunks: BlobPart[] = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const slug = (title || 'addisvault-video').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        a.href = url;
+        a.download = `${slug}-${durationSec}s.webm`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1200);
+        setIsExportingVideo(false);
+      };
+      recorder.start();
+      const captureMs = Math.min(Math.max(4000, durationSec * 120), 12000);
+      setTimeout(() => {
+        if (recorder.state !== 'inactive') recorder.stop();
+      }, captureMs);
+    } catch {
+      setIsExportingVideo(false);
+      handleDownloadStoryboardHtml();
+    }
   };
 
   const shareText = encodeURIComponent(
@@ -274,10 +376,10 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
             <span>AI Video &amp; Commercial Ad Studio · የቪዲዮ እና ማስታወቂያ ስቱዲዮ</span>
           </div>
           <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-            AI Video Storyboard &amp; Ad Studio
+            Generate &amp; Preview AI Videos and Social Ads Free — Pay to Export
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm text-stone-600 dark:text-stone-400">
-            Create animated storyboards, marketing scripts, and motion previews, then download your project as a standalone HTML file.
+            Create animated storyboards, marketing scripts, and HD motion previews for free. Unlock clean watermark-free WebM video exports &amp; share packages for 50–500+ ETB (or free with VIP).
           </p>
         </div>
 
@@ -292,7 +394,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
             }`}
           >
             <Video className="h-3.5 w-3.5" />
-            <span>AI Video Storyboard</span>
+            <span>AI Video Studio (50–500+ ETB)</span>
           </button>
           <button
             type="button"
@@ -304,7 +406,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
             }`}
           >
             <Megaphone className="h-3.5 w-3.5" />
-            <span>AI Video Ad Storyboard</span>
+            <span>AI Video Ad Studio (150–500 ETB)</span>
           </button>
         </div>
       </div>
@@ -442,9 +544,16 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
                 </span>
               </div>
 
-              <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                Ready to export
-              </span>
+              {isUnlocked ? (
+                <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>WATERMARK REMOVED</span>
+                </span>
+              ) : (
+                <span className="font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
+                  Export Fee: {currentPriceEtb.toLocaleString()} ETB
+                </span>
+              )}
             </div>
 
             <div className="overflow-hidden rounded-xl border border-stone-200 bg-zinc-950 dark:border-zinc-800">
@@ -462,8 +571,38 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
               </div>
             )}
 
-            <div className="space-y-3 pt-1">
+            {/* Pay-after-preview Export Bar */}
+            {!isUnlocked ? (
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600"
+                >
+                  <Lock className="h-4 w-4" />
+                  <span>Pay {currentPriceEtb.toLocaleString()} ETB to Remove Watermark &amp; Download Video</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenVipModal}
+                  className="min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  <span>Free w/ VIP</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 pt-1">
                 <div className="flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    disabled={isExportingVideo}
+                    onClick={handleExportCleanWebm}
+                    className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-60 dark:bg-emerald-600"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>{isExportingVideo ? 'Rendering Clean WebM...' : 'Download Clean Video (.webm)'}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleDownloadStoryboardHtml}
@@ -505,6 +644,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
                   </a>
                 </div>
               </div>
+            )}
           </div>
         </div>
       </div>

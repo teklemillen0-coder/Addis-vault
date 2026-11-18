@@ -83,7 +83,6 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [savingNotice, setSavingNotice] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Registration draft preserved until checkout payment is confirmed
   const [pendingListingId, setPendingListingId] = useState<string | null>(null);
@@ -200,7 +199,7 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
     });
   }, [listings, searchQuery, selectedCategory, selectedCity]);
 
-  const handleSubmitRegistration = async (e: React.FormEvent) => {
+  const handleSubmitRegistration = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorNotice(null);
     if (!name.trim() || !phone.trim()) {
@@ -208,44 +207,13 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
       return;
     }
     const listingId = `biz-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setIsSubmitting(true);
-    try {
-      const result = await submitBusinessListing({
-        data: {
-          id: listingId,
-          name: sanitizeUserInput(name, 120),
-          category: sanitizeUserInput(category, 60),
-          city: sanitizeUserInput(city, 60),
-          area: sanitizeUserInput(area, 80),
-          address: sanitizeUserInput(address, 200),
-          phone: sanitizePhone(phone),
-          description: sanitizeUserInput(description, 800),
-          hours: sanitizeUserInput(hours, 120),
-          mapUrl: sanitizeUserInput(mapUrl, 400),
-          tier: 'basic',
-          refNumber: '',
-          paymentMethod: 'free',
-        },
-      });
-      if (!result.ok) {
-        setErrorNotice(result.error);
-        return;
-      }
-      setSavingNotice(`Published "${name}" to the free Ethiopia Business Directory.`);
-      setName('');
-      setArea('');
-      setAddress('');
-      setPhone('');
-      setHours('');
-      setMapUrl('');
-      setDescription('');
-      setShowRegisterForm(false);
-      await refreshDirectory();
-    } catch {
-      setErrorNotice('Network error while publishing directory listing.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    setPendingListingId(listingId);
+    onRequestServiceCheckout({
+      id: listingId,
+      kind: 'directory_listing',
+      title: `Business Directory (${tier.toUpperCase()}) — ${name.trim()}`,
+      params: { tierId: tier },
+    });
   };
 
   return (
@@ -269,7 +237,7 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
             Find Local Ethiopian Businesses &amp; Register Your Shop
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm text-stone-600 dark:text-stone-400">
-            Search and publish business listings across Addis Ababa and regional cities for free.
+            Search verified shops, clinics, offices, cafes, technicians, and services across Addis Ababa and regional cities 100% FREE. Register your business location permanently starting at 100 ETB.
           </p>
         </div>
 
@@ -279,7 +247,7 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
           className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-800 dark:bg-emerald-600"
         >
           <Plus className="h-4 w-4" />
-          <span>{showRegisterForm ? 'Close Registration Form' : 'List a Business — Free'}</span>
+          <span>{showRegisterForm ? 'Close Registration Form' : 'Register Business (100–300 ETB)'}</span>
         </button>
       </div>
 
@@ -296,7 +264,7 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
         </div>
       )}
 
-      {/* Free public business listing form */}
+      {/* Paid Business Registration Form (100 - 300 ETB) */}
       {showRegisterForm && (
         <form
           onSubmit={handleSubmitRegistration}
@@ -308,10 +276,43 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
                 List Your Business in AddisVault Directory
               </h2>
               <p className="text-xs text-stone-500 dark:text-stone-400">
-                Listings are free and published after server-side validation.
+                Goes live immediately upon Telebirr / CBE reference confirmation.
               </p>
             </div>
-            <span className="font-mono text-sm font-extrabold text-emerald-800 dark:text-emerald-400">Free</span>
+            <span className="font-mono text-sm font-extrabold text-emerald-800 dark:text-emerald-400">
+              Selected Fee: {directoryTierPrice(tier)} ETB
+            </span>
+          </div>
+
+          {/* Tier Selection Cards */}
+          <div className="grid gap-3 md:grid-cols-3">
+            {DIRECTORY_TIERS.map((opt) => {
+              const selected = tier === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setTier(opt.id as DirectoryTierId)}
+                  className={`flex flex-col justify-between rounded-xl border p-4 text-left transition-colors ${
+                    selected
+                      ? 'border-emerald-700 bg-emerald-50/70 dark:border-emerald-500 dark:bg-emerald-950/30'
+                      : 'border-stone-200 bg-stone-50/70 hover:border-emerald-600/40 dark:border-zinc-800 dark:bg-zinc-950'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-display text-sm font-bold text-stone-900 dark:text-stone-100">
+                      {lang === 'am' ? opt.label.am : opt.label.en}
+                    </span>
+                    <span className="font-mono text-sm font-extrabold text-emerald-700 dark:text-emerald-400">
+                      {opt.priceEtb} ETB
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-stone-600 dark:text-stone-400">
+                    {lang === 'am' ? opt.perks.am : opt.perks.en}
+                  </p>
+                </button>
+              );
+            })}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -404,7 +405,7 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
             </div>
           </div>
 
-          {(
+          {tier !== 'basic' && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300">
@@ -450,11 +451,10 @@ export const BusinessDirectoryView: React.FC<BusinessDirectoryViewProps> = ({
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isSubmitting}
               className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-700 px-6 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600"
             >
               <Sparkles className="h-4 w-4 text-amber-300" />
-              <span>{isSubmitting ? 'Publishing…' : 'Publish Business — Free'}</span>
+              <span>Pay {directoryTierPrice(tier)} ETB &amp; Publish Business</span>
             </button>
           </div>
         </form>

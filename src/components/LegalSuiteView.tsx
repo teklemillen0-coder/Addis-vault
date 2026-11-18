@@ -26,12 +26,16 @@ import { checkClientRateLimit, sanitizePhone, sanitizeUserInput } from '../utils
 
 interface LegalSuiteViewProps {
   lang: Language;
+  unlockedLegalDocIds: Set<string>;
+  unlockedConsultTierIds: Set<string>;
   consultBookings: LegalConsultationBooking[];
+  vipActive: boolean;
   onRequestDocCheckout: (doc: LegalDocTemplate) => void;
   onRequestConsultCheckout: (
     tier: LegalConsultTier,
     intake: { clientName: string; phone: string; branch: string; caseSummary: string }
-  ) => Promise<void>;
+  ) => void;
+  onOpenVipModal: () => void;
 }
 
 function triggerLegalDownload(filename: string, content: string, mimeType: string) {
@@ -48,9 +52,13 @@ function triggerLegalDownload(filename: string, content: string, mimeType: strin
 
 export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
   lang,
+  unlockedLegalDocIds,
+  unlockedConsultTierIds,
   consultBookings,
+  vipActive,
   onRequestDocCheckout,
   onRequestConsultCheckout,
+  onOpenVipModal,
 }) => {
   const [suiteMode, setSuiteMode] = useState<'pleadings' | 'consultation'>('pleadings');
 
@@ -61,7 +69,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
 
   const activeDoc =
     branchTemplates.find((d) => d.id === selectedDocId) || branchTemplates[0];
-  const isDocUnlocked = true;
+  const isDocUnlocked = vipActive || unlockedLegalDocIds.has(activeDoc.id);
 
   const [courtName, setCourtName] = useState('Federal First Instance Court, Bole Division');
   const [caseNumber, setCaseNumber] = useState('New Filing / መዝገብ ቁጥር ____');
@@ -82,7 +90,6 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
   const [consultBranch, setConsultBranch] = useState('Civil & Contract Law (የፍትሐ ብሔር)');
   const [consultSummary, setConsultSummary] = useState('');
   const [consultError, setConsultError] = useState<string | null>(null);
-  const [isSubmittingConsult, setIsSubmittingConsult] = useState(false);
 
   const handleSelectBranch = (nextBranch: LegalBranch) => {
     setBranch(nextBranch);
@@ -196,7 +203,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
     );
   };
 
-  const handleBookConsultSubmit = async (e: React.FormEvent) => {
+  const handleBookConsultSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = sanitizeUserInput(consultName, 120).trim();
     const cleanPhone = sanitizePhone(consultPhone).trim();
@@ -206,24 +213,16 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
       return;
     }
     setConsultError(null);
-    setIsSubmittingConsult(true);
-    try {
-      await onRequestConsultCheckout(activeTier, {
-        clientName: cleanName,
-        phone: cleanPhone,
-        branch: consultBranch,
-        caseSummary: cleanSummary,
-      });
-    } catch (error) {
-      console.error('Could not submit free consultation request:', error);
-      setConsultError('Could not submit the request. Please try again.');
-    } finally {
-      setIsSubmittingConsult(false);
-    }
+    onRequestConsultCheckout(activeTier, {
+      clientName: cleanName,
+      phone: cleanPhone,
+      branch: consultBranch,
+      caseSummary: cleanSummary,
+    });
   };
 
   const latestBooking = consultBookings[0] || null;
-  const hasAnyConsultUnlocked = true;
+  const hasAnyConsultUnlocked = vipActive || unlockedConsultTierIds.size > 0 || consultBookings.length > 0;
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 space-y-8">
@@ -317,7 +316,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {branchTemplates.map((doc) => {
               const selected = doc.id === activeDoc.id;
-              const unlocked = true;
+              const unlocked = vipActive || unlockedLegalDocIds.has(doc.id);
               return (
                 <button
                   key={doc.id}
@@ -505,6 +504,14 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
                           <Download className="h-4 w-4" />
                           <span>Unlock Final Document ({activeDoc.priceEtb} ETB)</span>
                         </button>
+                        <button
+                          type="button"
+                          onClick={onOpenVipModal}
+                          className="min-h-[42px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 dark:bg-amber-950/30 dark:text-amber-300"
+                        >
+                          <Crown className="h-3.5 w-3.5" />
+                          <span>VIP Unlock</span>
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -556,7 +563,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
                         {tier.durationLabel}
                       </span>
                       <span className="font-mono text-xl font-extrabold text-emerald-800 dark:text-emerald-400">
-                        Free
+                        {tier.priceEtb.toLocaleString()} ETB
                       </span>
                     </div>
                     <h3 className="mt-2 font-display text-base font-bold text-stone-900 dark:text-stone-100">
@@ -586,7 +593,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
               className="lg:col-span-7 rounded-2xl border border-stone-200 bg-white p-6 space-y-4 dark:border-zinc-800 dark:bg-zinc-900"
             >
               <h2 className="font-display text-lg font-bold text-stone-900 dark:text-stone-100">
-                Request {activeTier.title[lang]} — Free
+                Book {activeTier.title[lang]} ({activeTier.priceEtb.toLocaleString()} ETB)
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -656,11 +663,12 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
 
               <button
                 type="submit"
-                disabled={isSubmittingConsult}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 text-xs sm:text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600"
               >
                 <ShieldCheck className="h-4 w-4" />
-                <span>{isSubmittingConsult ? 'Submitting…' : 'Submit Free Consultation Request'}</span>
+                <span>
+                  Pay {activeTier.priceEtb.toLocaleString()} ETB via Telebirr / CBE &amp; Unlock Direct Consultation
+                </span>
               </button>
             </form>
 
@@ -682,10 +690,10 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
               {latestBooking ? (
                 <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 text-xs dark:border-emerald-900/60 dark:bg-emerald-950/30">
                   <div className="font-mono font-bold text-emerald-800 dark:text-emerald-300">
-                    Request Code: {latestBooking.bookingCode}
+                    Booking Code: {latestBooking.bookingCode} · Ref: {latestBooking.refNumber}
                   </div>
                   <div className="font-semibold text-stone-900 dark:text-stone-100">
-                    {latestBooking.tierTitle} — Free
+                    {latestBooking.tierTitle} ({latestBooking.priceEtb.toLocaleString()} ETB)
                   </div>
                   <p className="text-stone-600 dark:text-stone-300">
                     Client: {latestBooking.clientName} ({latestBooking.phone}) · {latestBooking.branch}
@@ -693,7 +701,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
                   <div className="flex flex-wrap gap-2 pt-2">
                     <a
                       href={`https://t.me/tekii18?text=${encodeURIComponent(
-                        `AddisVault Legal Consultation (${latestBooking.bookingCode})\nPackage: ${latestBooking.tierTitle}\nClient: ${latestBooking.clientName} (${latestBooking.phone})\nBranch: ${latestBooking.branch}\nSummary: ${latestBooking.caseSummary}`
+                        `AddisVault Legal Consultation (${latestBooking.bookingCode})\nPackage: ${latestBooking.tierTitle}\nPaid Ref: ${latestBooking.refNumber}\nClient: ${latestBooking.clientName} (${latestBooking.phone})\nBranch: ${latestBooking.branch}\nSummary: ${latestBooking.caseSummary}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -704,7 +712,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
                     </a>
                     <a
                       href={`https://wa.me/251925695197?text=${encodeURIComponent(
-                        `AddisVault Legal Consultation (${latestBooking.bookingCode})\nPackage: ${latestBooking.tierTitle}\nClient: ${latestBooking.clientName} (${latestBooking.phone})\nSummary: ${latestBooking.caseSummary}`
+                        `AddisVault Legal Consultation (${latestBooking.bookingCode})\nPackage: ${latestBooking.tierTitle}\nPaid Ref: ${latestBooking.refNumber}\nClient: ${latestBooking.clientName} (${latestBooking.phone})\nSummary: ${latestBooking.caseSummary}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -717,7 +725,7 @@ export const LegalSuiteView: React.FC<LegalSuiteViewProps> = ({
                 </div>
               ) : (
                 <p className="text-xs leading-relaxed text-stone-600 dark:text-stone-400">
-                  Complete the booking form on the left. The request and its Telegram/WhatsApp follow-up links are free.
+                  Complete the booking form on the left and confirm your Telebirr (0925695197) or CBE (1000211261513) transfer. Your Booking Code and one-click pre-filled Telegram/WhatsApp legal session links unlock immediately upon confirmation.
                 </p>
               )}
             </div>

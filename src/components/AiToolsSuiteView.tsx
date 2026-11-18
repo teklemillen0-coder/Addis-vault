@@ -22,6 +22,7 @@ interface AiToolsSuiteViewProps {
   unlockedToolIds: Set<string>;
   vipActive: boolean;
   onRequestCheckout: (tool: AiToolDefinition) => void;
+  onOpenVipModal: () => void;
   adConfig: AdConfig;
   onTrackAdImpression: () => void;
   onTrackAdClick: () => void;
@@ -189,6 +190,7 @@ export const AiToolsSuiteView: React.FC<AiToolsSuiteViewProps> = ({
   unlockedToolIds,
   vipActive,
   onRequestCheckout,
+  onOpenVipModal,
   adConfig,
   onTrackAdImpression,
   onTrackAdClick,
@@ -360,6 +362,16 @@ export const AiToolsSuiteView: React.FC<AiToolsSuiteViewProps> = ({
           </p>
         </div>
 
+        {!vipActive && (
+          <button
+            type="button"
+            onClick={onOpenVipModal}
+            className="inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
+          >
+            <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span>{copy.vipShortcut}</span>
+          </button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
@@ -387,9 +399,9 @@ export const AiToolsSuiteView: React.FC<AiToolsSuiteViewProps> = ({
                     {String(idx + 1).padStart(2, '0')} · {tool.categoryTag[lang]}
                   </span>
                   {unlocked ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold">
+                    <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-bold">
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      <span>Free</span>
+                      <span>Unlocked</span>
                     </span>
                   ) : (
                     <span className="font-mono font-bold text-stone-600 dark:text-stone-300">
@@ -536,7 +548,7 @@ export const AiToolsSuiteView: React.FC<AiToolsSuiteViewProps> = ({
                 <span>{copy.outputTitle}</span>
               </div>
               <span className="font-mono text-xs text-stone-500 dark:text-stone-400">
-                Free export
+                {activeTool.priceEtb} ETB export
               </span>
             </div>
 
