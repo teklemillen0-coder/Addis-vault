@@ -10,6 +10,7 @@ interface ProductModalProps {
   product: DigitalProduct | null;
   lang: Language;
   isUnlocked: boolean;
+  ownerAccess?: boolean;
   inCart: boolean;
   onClose: () => void;
   onAddToCart: (productId: string) => void;
@@ -22,6 +23,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   product,
   lang,
   isUnlocked,
+  ownerAccess = false,
   inCart,
   onClose,
   onAddToCart,
@@ -191,12 +193,20 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 bg-stone-50 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950/80">
           <div>
             <div className="text-xs text-stone-500 dark:text-stone-400">{product.fileSize} · {product.format}</div>
-            <div className="font-mono text-xl font-bold tabular-nums text-emerald-800 dark:text-emerald-400">
-              {product.priceEtb.toLocaleString()} ETB
-            </div>
-            <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-              {lang === 'am' ? 'በVIP ጥቅል ነፃ' : 'Free with VIP Pass'}
-            </div>
+            {ownerAccess ? (
+              <div className="font-mono text-xl font-bold text-emerald-800 dark:text-emerald-400">
+                Free for Owner
+              </div>
+            ) : (
+              <>
+                <div className="font-mono text-xl font-bold tabular-nums text-emerald-800 dark:text-emerald-400">
+                  {product.priceEtb.toLocaleString()} ETB
+                </div>
+                <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                  {lang === 'am' ? 'በVIP ጥቅል ነፃ' : 'Free with VIP Pass'}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2.5">

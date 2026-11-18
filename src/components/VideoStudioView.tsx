@@ -23,6 +23,7 @@ interface VideoStudioViewProps {
   lang: Language;
   adConfig: AdConfig;
   vipActive: boolean;
+  ownerAccess?: boolean;
   unlockedServiceIds: Set<string>;
   onRequestServiceCheckout: (service: PendingService) => void;
   onOpenVipModal: () => void;
@@ -95,6 +96,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
   adConfig,
   lang,
   vipActive,
+  ownerAccess = false,
   unlockedServiceIds,
   onRequestServiceCheckout,
   onOpenVipModal,
@@ -376,10 +378,14 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
             <span>AI Video &amp; Commercial Ad Studio · የቪዲዮ እና ማስታወቂያ ስቱዲዮ</span>
           </div>
           <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-            Generate &amp; Preview AI Videos and Social Ads Free — Pay to Export
+            {ownerAccess
+              ? "Owner AI Video Studio — Free Unlimited Exports"
+              : "Generate & Preview AI Videos and Social Ads Free — Pay to Export"}
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm text-stone-600 dark:text-stone-400">
-            Create animated storyboards, marketing scripts, and HD motion previews for free. Unlock clean watermark-free WebM video exports &amp; share packages for 50–500+ ETB (or free with VIP).
+            {ownerAccess
+              ? "Owner access includes unlimited free clean video exports, scripts, storyboards, and share packages."
+              : "Create animated storyboards, marketing scripts, and HD motion previews for free. Unlock clean watermark-free WebM video exports & share packages for 50–500+ ETB (or free with VIP)."}
           </p>
         </div>
 
@@ -551,7 +557,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
                 </span>
               ) : (
                 <span className="font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
-                  Export Fee: {currentPriceEtb.toLocaleString()} ETB
+                  {ownerAccess ? "Owner export: Free" : `Export Fee: ${currentPriceEtb.toLocaleString()} ETB`}
                 </span>
               )}
             </div>

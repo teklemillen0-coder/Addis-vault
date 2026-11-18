@@ -4,7 +4,6 @@ import { DEFAULT_AD_CONFIG } from "@/constants/ads";
 import { ALL_CV_COUNTRIES } from "@/constants/cvCountries";
 import { VIP_PLANS } from "@/constants/growth";
 import { adStudioPriceEtb, DIRECTORY_TIERS, videoStudioPriceEtb } from "@/utils/servicePricing";
-import { verifyOwnerPin } from "@/utils/appSecurity";
 import { PRODUCTS } from "@/data/products";
 
 describe("VIP pass pricing", () => {
@@ -88,11 +87,6 @@ describe("AI suite & Global CV standards", () => {
 });
 
 describe("Security & clean production ad defaults", () => {
-  it("does not fall back to a hardcoded PIN when no stored hash is present", () => {
-    expect(verifyOwnerPin("0925", null)).toBe(false);
-    expect(verifyOwnerPin("0925", "")).toBe(false);
-  });
-
   it("starts with ads and demo sponsor banners disabled", () => {
     expect(DEFAULT_AD_CONFIG.adsEnabled).toBe(false);
     expect(DEFAULT_AD_CONFIG.showDefaultBanners).toBe(false);

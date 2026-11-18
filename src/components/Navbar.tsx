@@ -10,6 +10,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Link2,
+  LogOut,
   MapPin,
   Moon,
   PackageCheck,
@@ -22,7 +23,6 @@ import {
   Sun,
   User,
   Users,
-  X,
 } from 'lucide-react';
 import { Language, MemberProfile, ViewTab } from '../types';
 import { EXTRA_T } from '../i18n/extraTranslations';
@@ -43,7 +43,7 @@ interface NavbarProps {
   currentMember: MemberProfile | null;
   onOpenMemberAuth: () => void;
   ownerMode?: boolean;
-  onTriggerOwnerGate?: () => void;
+  onOpenOwnerLogin?: () => void;
   onExitOwnerMode?: () => void;
 }
 
@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentMember,
   onOpenMemberAuth,
   ownerMode = false,
-  onTriggerOwnerGate,
+  onOpenOwnerLogin,
   onExitOwnerMode,
 }) => {
   const t = UI_TRANSLATIONS[lang];
@@ -76,14 +76,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     tapTimesRef.current = recent;
     if (recent.length >= 5) {
       tapTimesRef.current = [];
-      onTriggerOwnerGate?.();
+      onOpenOwnerLogin?.();
     }
   };
 
   return (
     <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
-        {/* Zone 1: Brand Wordmark (5 quick taps opens Hidden Owner Security Gate) */}
+        {/* Zone 1: Brand Wordmark (five quick taps opens Owner Login) */}
         <button
           type="button"
           onClick={handleBrandClick}
@@ -368,7 +368,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Settings className="h-4 w-4" />
           </button>
 
-          {/* Owner Mode controls (only visible after passing Hidden Owner Security Gate) */}
+          {/* Owner controls are shown only for the server-verified admin session. */}
           {ownerMode && (
             <div className="hidden lg:flex items-center gap-1">
               <button
@@ -384,15 +384,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <LayoutDashboard className="h-3.5 w-3.5" />
                 <ShieldCheck className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline">Owner Dashboard</span>
               </button>
               <button
                 type="button"
                 onClick={onExitOwnerMode}
-                title="Exit Owner Mode"
-                aria-label="Exit Owner Mode"
+                title="Log out of Owner Mode"
+                aria-label="Log out of Owner Mode"
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-300"
               >
-                <X className="h-3.5 w-3.5" />
+                <LogOut className="h-3.5 w-3.5" />
               </button>
             </div>
           )}
@@ -407,7 +408,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
           </button>
-
 
           {/* Prominent PWA Install App Button */}
           {!isInstalled && (
@@ -567,18 +567,29 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span>{t.navLinkDownloader}</span>
         </button>
         {ownerMode && (
-          <button
-            type="button"
-            onClick={() => onSelectTab('dashboard')}
-            className={`inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1 font-semibold ${
-              activeTab === 'dashboard'
-                ? 'bg-amber-600 text-white'
-                : 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300'
-            }`}
-          >
-            <LayoutDashboard className="h-3 w-3" />
-            <span>{t.navDashboard}</span>
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => onSelectTab('dashboard')}
+              className={`inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1 font-semibold ${
+                activeTab === 'dashboard'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300'
+              }`}
+            >
+              <LayoutDashboard className="h-3 w-3" />
+              <span>{t.navDashboard}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onExitOwnerMode}
+              aria-label="Log out of Owner Mode"
+              className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-stone-200 bg-white px-2.5 py-1 font-semibold text-stone-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-stone-300"
+            >
+              <LogOut className="h-3 w-3" />
+              <span>Log out</span>
+            </button>
+          </>
         )}
         {!isInstalled && (
           <button

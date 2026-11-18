@@ -108,22 +108,6 @@ export function readEncryptedStorage<T>(key: string, fallback: T): T {
   }
 }
 
-export function hashOwnerPin(pin: string): string {
-  return computeIntegritySig(`OWNER_PIN:${pin.trim()}`);
-}
-
-export function verifyOwnerPin(inputPin: string, storedValue: string | null): boolean {
-  const clean = inputPin.trim();
-  if (!clean) return false;
-  if (!storedValue) {
-    return false;
-  }
-  if (storedValue.startsWith('HASH:')) {
-    return `HASH:${hashOwnerPin(clean)}` === storedValue;
-  }
-  return clean === storedValue;
-}
-
 const clientActionHistory = new Map<string, number[]>();
 
 export function checkClientRateLimit(actionKey: string, maxPerMinute = 15): boolean {

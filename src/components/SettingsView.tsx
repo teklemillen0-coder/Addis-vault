@@ -313,7 +313,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               AddisVault v4.0 Enterprise Super-App PWA
             </div>
             <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
-              <strong>Privacy &amp; Security:</strong> All inputs are XSS-sanitized, AI &amp; form routes are rate-limited, checkout totals are verified against canonical server/catalog tables, Vault session tokens carry integrity signatures &amp; device-binding, and the Owner Dashboard is locked behind an encrypted PIN gate.
+              <strong>Privacy &amp; Security:</strong> All inputs are XSS-sanitized, AI &amp; form routes are rate-limited, checkout totals are verified against canonical server/catalog tables, Vault session tokens carry integrity signatures &amp; device-binding, and owner-only features require Supabase sign-in with a server-verified admin role.
             </p>
             <div className="flex items-center gap-1.5 pt-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
               <ShieldCheck className="h-3.5 w-3.5" />

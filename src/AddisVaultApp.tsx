@@ -13,15 +13,12 @@ import {
   submitWorkerProfile,
   updateExpediterRequest,
 } from "@/lib/community.functions";
-import { verifyOwnerPin } from "@/lib/owner.functions";
 import {
   ArrowDown,
   Crown,
   Download,
   FileQuestion,
-  KeyRound,
   Link2,
-  Loader2,
   Mail,
   MessageCircle,
   Search,
@@ -108,6 +105,7 @@ import { SupportWidget } from "./components/SupportWidget";
 import { MissingFileModal } from "./components/MissingFileModal";
 import { SecureVaultReaderModal } from "./components/SecureVaultReaderModal";
 import { MemberAuthModal } from "./components/MemberAuthModal";
+import { OwnerLoginModal } from "./components/OwnerLoginModal";
 import { VerifiedOwnerModal } from "./components/VerifiedOwnerModal";
 import { VipPassModal } from "./components/VipPassModal";
 
@@ -407,10 +405,7 @@ export default function App() {
 
   // Hidden Owner Mode + Catalog Editor State
   const [ownerMode, setOwnerMode] = useState(false);
-  const [isOwnerGateOpen, setIsOwnerGateOpen] = useState(false);
-  const [ownerPinInput, setOwnerPinInput] = useState("");
-  const [ownerGateBusy, setOwnerGateBusy] = useState(false);
-  const [ownerGateError, setOwnerGateError] = useState<string | null>(null);
+  const [isOwnerLoginOpen, setIsOwnerLoginOpen] = useState(false);
   const [editorState, setEditorState] = useState<{
     open: boolean;
     item: DigitalProduct | null;
@@ -767,6 +762,12 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     let urlChanged = false;
 
+    if (params.get("owner") === "true") {
+      setIsOwnerLoginOpen(true);
+      params.delete("owner");
+      urlChanged = true;
+    }
+
     const refParam = params.get("ref");
     if (refParam && getPromoDiscountPercent(refParam) > 0) {
       setAppliedPromo(refParam.trim().toUpperCase());
@@ -823,7 +824,8 @@ export default function App() {
     }));
   }, []);
 
-  const vipActive = isVipActiveOnCurrentDevice(vipSubscription, deviceId);
+  const ownerAccess = ownerMode && account?.isAdmin === true;
+  const vipActive = ownerAccess || isVipActiveOnCurrentDevice(vipSubscription, deviceId);
 
   const unlockedIds = useMemo(() => {
     const set = new Set<string>();
@@ -1781,31 +1783,6 @@ export default function App() {
     }
   };
 
-  const handleOwnerGateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!account) {
-      setOwnerGateError(x.ownerGateSignIn);
-      return;
-    }
-    setOwnerGateBusy(true);
-    setOwnerGateError(null);
-    try {
-      const res = await verifyOwnerPin({ data: { pin: ownerPinInput } });
-      if (res.ok) {
-        setOwnerMode(true);
-        setOwnerPinInput("");
-        setIsOwnerGateOpen(false);
-        setActiveTab("dashboard");
-      } else {
-        setOwnerGateError(x.ownerGateDenied);
-      }
-    } catch {
-      setOwnerGateError(x.ownerGateDenied);
-    } finally {
-      setOwnerGateBusy(false);
-    }
-  };
-
   const handleDeleteCatalogItem = async (item: DigitalProduct) => {
     if (!ownerMode || !account?.isAdmin) return;
     const res = await deleteCatalogItem({ data: { id: item.id, category: item.category } });
@@ -1872,14 +1849,14 @@ export default function App() {
         onInstallClick={handleInstallClick}
         currentMember={currentMember}
         onOpenMemberAuth={() => setIsMemberAuthOpen(true)}
-        ownerMode={ownerMode && Boolean(account?.isAdmin)}
-        onTriggerOwnerGate={() => {
-          setOwnerGateError(null);
-          setIsOwnerGateOpen(true);
-        }}
+        ownerMode={ownerAccess}
+        onOpenOwnerLogin={() => setIsOwnerLoginOpen(true)}
         onExitOwnerMode={() => {
+          void supabase.auth.signOut();
+          setCurrentMember(null);
+          setAccount(null);
           setOwnerMode(false);
-          if (activeTab === "dashboard") setActiveTab("marketplace");
+          setActiveTab("marketplace");
         }}
       />
 
@@ -1993,14 +1970,21 @@ export default function App() {
                         <Link2 className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                         <span>{t.heroLinkToolCta}</span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsVipModalOpen(true)}
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-50/70 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
-                      >
-                        <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <span>{vipActive ? t.vipActiveTitle : t.vipBtnLabel}</span>
-                      </button>
+                      {ownerAccess ? (
+                        <span className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-50/70 px-4 py-2.5 text-sm font-semibold text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300">
+                          <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                          <span>Owner full access</span>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIsVipModalOpen(true)}
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-50/70 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
+                        >
+                          <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                          <span>{vipActive ? t.vipActiveTitle : t.vipBtnLabel}</span>
+                        </button>
+                      )}
                       {!isInstalled && (
                         <button
                           type="button"
@@ -2734,6 +2718,7 @@ export default function App() {
               productsById={productsById}
               allProducts={catalog}
               vipSubscription={vipSubscription}
+              ownerAccess={ownerAccess}
               onOpenInVault={(prod, ord) => handleOpenInVault(prod, ord)}
               onBrowseMarketplace={() => setActiveTab("marketplace")}
               onOpenVipModal={() => setIsVipModalOpen(true)}
@@ -2874,6 +2859,7 @@ export default function App() {
               lang={lang}
               adConfig={adConfig}
               vipActive={vipActive}
+              ownerAccess={ownerAccess}
               unlockedServiceIds={unlockedServiceIds}
               onRequestServiceCheckout={handleRequestServiceCheckout}
               onOpenVipModal={() => setIsVipModalOpen(true)}
@@ -2909,39 +2895,25 @@ export default function App() {
               onUpdateOwnerProfile={setOwnerProfile}
               isOwner={Boolean(account?.isAdmin)}
               isSignedIn={Boolean(account)}
-              onOpenSignIn={() => setIsMemberAuthOpen(true)}
+              onOpenSignIn={() => setIsOwnerLoginOpen(true)}
             />
           )}
 
           {activeTab === "dashboard" && (!ownerMode || !account?.isAdmin) && (
             <section className="mx-auto max-w-xl px-4 py-16 text-center space-y-4">
               <h1 className="font-display text-xl font-bold text-stone-900 dark:text-stone-100">
-                {x.ownerGateTitle}
+                Owner Dashboard
               </h1>
               <p className="text-sm text-stone-600 dark:text-stone-400">
                 {account ? x.ownerGateDenied : x.ownerGateSignIn}
               </p>
-              <div className="flex justify-center gap-3">
-                {!account && (
-                  <button
-                    type="button"
-                    onClick={() => setIsMemberAuthOpen(true)}
-                    className="min-h-[42px] rounded-xl bg-emerald-700 px-5 text-xs font-bold text-white"
-                  >
-                    {t.memberSignUpLoginBtn}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOwnerGateError(null);
-                    setIsOwnerGateOpen(true);
-                  }}
-                  className="min-h-[42px] rounded-xl border border-stone-300 bg-white px-5 text-xs font-bold text-stone-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-stone-100"
-                >
-                  {x.ownerGateSubmit}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsOwnerLoginOpen(true)}
+                className="min-h-[42px] rounded-xl bg-amber-600 px-5 text-xs font-bold text-white"
+              >
+                Owner Login
+              </button>
             </section>
           )}
 
@@ -3012,6 +2984,14 @@ export default function App() {
               </button>
               <button
                 type="button"
+                onClick={() => setIsOwnerLoginOpen(true)}
+                className="inline-flex items-center gap-1.5 font-semibold text-amber-800 hover:underline dark:text-amber-400"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Owner</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setIsMissingFileOpen(true)}
                 className="inline-flex items-center gap-1.5 font-semibold text-emerald-800 hover:underline dark:text-emerald-400"
               >
@@ -3036,6 +3016,7 @@ export default function App() {
         product={previewProduct}
         lang={lang}
         isUnlocked={previewProduct ? unlockedIds.has(previewProduct.id) : false}
+        ownerAccess={ownerAccess}
         inCart={previewProduct ? cartIds.has(previewProduct.id) : false}
         onClose={() => setPreviewProduct(null)}
         onAddToCart={handleAddToCart}
@@ -3171,84 +3152,20 @@ export default function App() {
         }}
       />
 
-      {/* Hidden Owner Security Gate Modal (5 quick taps on AddisVault brand mark) */}
-      {isOwnerGateOpen && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="owner-gate-title"
-        >
-          <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-3 dark:border-zinc-800">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <KeyRound className="h-4 w-4" />
-                <h2
-                  id="owner-gate-title"
-                  className="font-display text-base font-bold text-stone-900 dark:text-stone-100"
-                >
-                  {x.ownerGateTitle}
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOwnerGateOpen(false)}
-                aria-label={t.closeBtn}
-                className="rounded-lg p-1 text-stone-500 hover:bg-stone-100 dark:hover:bg-zinc-800"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {!account ? (
-              <div className="mt-4 space-y-3">
-                <p className="text-xs text-stone-600 dark:text-stone-300">{x.ownerGateSignIn}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOwnerGateOpen(false);
-                    setIsMemberAuthOpen(true);
-                  }}
-                  className="h-11 w-full rounded-xl bg-emerald-700 text-xs font-bold text-white hover:bg-emerald-800"
-                >
-                  {t.memberSignUpLoginBtn}
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleOwnerGateSubmit} className="mt-4 space-y-3">
-                <input
-                  type="password"
-                  value={ownerPinInput}
-                  onChange={(e) => {
-                    setOwnerPinInput(e.target.value);
-                    setOwnerGateError(null);
-                  }}
-                  placeholder="Enter Owner Security PIN"
-                  required
-                  className="h-11 w-full rounded-xl border border-stone-300 bg-stone-50 px-3 text-sm font-mono text-stone-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-stone-100"
-                />
-                {ownerGateError && (
-                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                    {ownerGateError}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={ownerGateBusy}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-60"
-                >
-                  {ownerGateBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShieldCheck className="h-4 w-4" />
-                  )}
-                  <span>{x.ownerGateSubmit}</span>
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      <OwnerLoginModal
+        isOpen={isOwnerLoginOpen}
+        onClose={() => setIsOwnerLoginOpen(false)}
+        onOwnerVerified={(verifiedAccount) => {
+          setAccount({
+            userId: verifiedAccount.userId,
+            email: verifiedAccount.email,
+            isAdmin: verifiedAccount.isAdmin,
+          });
+          setCurrentMember(verifiedAccount.member);
+          setOwnerMode(true);
+          setActiveTab("dashboard");
+        }}
+      />
 
       <PWAInstallModal
         isOpen={isPWAModalOpen}

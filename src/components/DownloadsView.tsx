@@ -16,6 +16,7 @@ interface DownloadsViewProps {
   productsById: Record<string, DigitalProduct>;
   allProducts: DigitalProduct[];
   vipSubscription: VipSubscription | null;
+  ownerAccess?: boolean;
   onOpenInVault: (product: DigitalProduct, order: PurchaseOrder | null) => void;
   onBrowseMarketplace: () => void;
   onOpenVipModal: () => void;
@@ -30,6 +31,7 @@ export const DownloadsView: React.FC<DownloadsViewProps> = ({
   productsById,
   allProducts,
   vipSubscription,
+  ownerAccess = false,
   onOpenInVault,
   onBrowseMarketplace,
   onOpenVipModal,
@@ -39,7 +41,7 @@ export const DownloadsView: React.FC<DownloadsViewProps> = ({
 }) => {
   const t = UI_TRANSLATIONS[lang];
   const deviceId = getOrCreateDeviceId();
-  const vipActive = isVipActiveOnCurrentDevice(vipSubscription, deviceId);
+  const vipActive = ownerAccess || isVipActiveOnCurrentDevice(vipSubscription, deviceId);
   const deviceTag = getShortDeviceTag(deviceId);
 
   // Collect device-bound unlocked items from verified orders
@@ -105,7 +107,19 @@ export const DownloadsView: React.FC<DownloadsViewProps> = ({
       </div>
 
       {/* VIP Status Banner */}
-      {vipActive && vipSubscription ? (
+      {ownerAccess ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/80 bg-amber-50/60 px-5 py-4 dark:border-amber-700/50 dark:bg-amber-950/20">
+          <div className="flex items-center gap-3">
+            <Crown className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="font-display text-sm font-bold text-stone-900 dark:text-stone-100">
+              Owner full access — all library items unlocked
+            </div>
+          </div>
+          <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300">
+            {unlockedEntries.length} / {allProducts.length} Unlocked
+          </span>
+        </div>
+      ) : vipActive && vipSubscription ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/80 bg-amber-50/60 px-5 py-4 dark:border-amber-700/50 dark:bg-amber-950/20">
           <div className="flex items-center gap-3">
             <Crown className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />

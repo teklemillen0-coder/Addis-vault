@@ -200,7 +200,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="mt-auto pt-5">
           <div className="flex items-baseline justify-between border-t border-stone-100 pt-4 dark:border-zinc-800">
             <span className="font-mono text-lg font-bold tabular-nums text-emerald-800 dark:text-emerald-400">
-              {product.priceEtb.toLocaleString()} ETB
+              {ownerMode ? "Free for Owner" : `${product.priceEtb.toLocaleString()} ETB`}
             </span>
             {isUnlocked ? (
               <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
