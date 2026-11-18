@@ -18,9 +18,11 @@ import { AdConfig, Language, PendingService } from '@/types';
 import { checkClientRateLimit, sanitizeUserInput } from '@/utils/appSecurity';
 import { adStudioPriceEtb, videoStudioPriceEtb } from '@/utils/servicePricing';
 import { AdSlot } from './AdSlot';
+import { ProtectedContent } from './ProtectedContent';
 
 interface VideoStudioViewProps {
   lang: Language;
+  watermarkId: string;
   adConfig: AdConfig;
   vipActive: boolean;
   ownerAccess?: boolean;
@@ -95,6 +97,7 @@ function wrapText(
 export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
   adConfig,
   lang,
+  watermarkId,
   vipActive,
   ownerAccess = false,
   unlockedServiceIds,
@@ -562,20 +565,25 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({
               )}
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-zinc-950 dark:border-zinc-800">
-              <canvas
-                ref={canvasRef}
-                width={720}
-                height={380}
-                className="w-full h-auto block aspect-[720/380]"
-              />
-            </div>
-
-            {scriptOutput && (
-              <div className="max-h-44 overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-3.5 text-xs leading-relaxed text-stone-800 whitespace-pre-wrap dark:border-zinc-800 dark:bg-zinc-950 dark:text-stone-200">
-                {scriptOutput}
+            <ProtectedContent
+              watermark={`Addis-Vault Video Preview · ${watermarkId}`}
+              className="space-y-3"
+            >
+              <div className="overflow-hidden rounded-xl border border-stone-200 bg-zinc-950 dark:border-zinc-800">
+                <canvas
+                  ref={canvasRef}
+                  width={720}
+                  height={380}
+                  className="w-full h-auto block aspect-[720/380]"
+                />
               </div>
-            )}
+
+              {scriptOutput && (
+                <div className="max-h-44 overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-3.5 text-xs leading-relaxed text-stone-800 whitespace-pre-wrap dark:border-zinc-800 dark:bg-zinc-950 dark:text-stone-200">
+                  {scriptOutput}
+                </div>
+              )}
+            </ProtectedContent>
 
             {/* Pay-after-preview Export Bar */}
             {!isUnlocked ? (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ProtectedContentProps {
   /** When false, children render normally (e.g. paid & unlocked exports). */
@@ -15,11 +15,49 @@ export const ProtectedContent: React.FC<ProtectedContentProps> = ({
   children,
   className = '',
 }) => {
+  const [curtainVisible, setCurtainVisible] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setCurtainVisible(false);
+      return;
+    }
+
+    const showCurtain = () => setCurtainVisible(true);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') showCurtain();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const screenshotShortcut =
+        event.key === 'PrintScreen' ||
+        (event.ctrlKey && event.shiftKey && key === 's') ||
+        (event.metaKey && event.shiftKey && ['Digit3', 'Digit4', 'Digit5'].includes(event.code));
+
+      if (screenshotShortcut) {
+        event.preventDefault();
+        showCurtain();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('blur', showCurtain);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('blur', showCurtain);
+    };
+  }, [active]);
+
   if (!active) return <div className={className}>{children}</div>;
 
   return (
     <div
-      className={`av-protected relative ${className}`}
+      className={`av-protected relative select-none ${className}`}
+      onContextMenu={(event) => event.preventDefault()}
+      onCopy={(event) => event.preventDefault()}
+      onCut={(event) => event.preventDefault()}
     >
       {children}
 
@@ -34,6 +72,30 @@ export const ProtectedContent: React.FC<ProtectedContentProps> = ({
           ).replace(/%2523/g, '%23')}")`,
         }}
       />
+
+      {curtainVisible && (
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center bg-zinc-950 p-6 text-center text-white"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="max-w-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Security Alert</p>
+            <h2 className="mt-3 text-lg font-bold">Protected Content — Addis-Vault</h2>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+              This view was covered after focus changed or a screenshot shortcut was detected. Browsers cannot reliably
+              block screenshots or screen recording.
+            </p>
+            <button
+              type="button"
+              onClick={() => setCurtainVisible(false)}
+              className="mt-5 min-h-11 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+            >
+              Return to protected content
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

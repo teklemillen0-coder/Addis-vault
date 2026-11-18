@@ -11,6 +11,7 @@ interface ProductModalProps {
   lang: Language;
   isUnlocked: boolean;
   ownerAccess?: boolean;
+  watermarkId: string;
   inCart: boolean;
   onClose: () => void;
   onAddToCart: (productId: string) => void;
@@ -24,6 +25,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   lang,
   isUnlocked,
   ownerAccess = false,
+  watermarkId,
   inCart,
   onClose,
   onAddToCart,
@@ -114,7 +116,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           {product.hasVideoPreview && (
             <ProtectedContent
               active={!isUnlocked}
-              watermark={`PREVIEW · ${product.sku} · AddisVault`}
+              watermark={`Addis-Vault Protected · ${watermarkId} · ${product.sku}`}
               className="overflow-hidden rounded-2xl"
             >
               <VideoPreviewPlayer
@@ -179,7 +181,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
             <ProtectedContent
               active={!isUnlocked}
-              watermark={`PREVIEW · ${product.sku}`}
+              watermark={`Addis-Vault Protected · ${watermarkId} · ${product.sku}`}
               className="mt-3 rounded-lg"
             >
               <p className="p-1 text-sm leading-relaxed text-stone-700 dark:text-stone-300">

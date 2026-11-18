@@ -86,6 +86,7 @@ import { enqueueOfflineAction, flushOfflineQueue } from "./utils/offlineQueue";
 import {
   generateUserReferralCode,
   getOrCreateDeviceId,
+  getShortDeviceTag,
   isOrderBoundToCurrentDevice,
   isVipActiveOnCurrentDevice,
   mintSingleUseVaultToken,
@@ -2731,6 +2732,7 @@ export default function App() {
           {activeTab === "cv_studio" && (
             <CvBuilderView
               lang={lang}
+              watermarkId={getShortDeviceTag(deviceId)}
               unlockedCvCountryIds={unlockedCvCountryIds}
               vipActive={vipActive}
               onRequestCheckout={handleRequestCvCheckout}
@@ -2857,6 +2859,7 @@ export default function App() {
           {activeTab === "video_studio" && (
             <VideoStudioView
               lang={lang}
+              watermarkId={getShortDeviceTag(deviceId)}
               adConfig={adConfig}
               vipActive={vipActive}
               ownerAccess={ownerAccess}
@@ -3017,6 +3020,7 @@ export default function App() {
         lang={lang}
         isUnlocked={previewProduct ? unlockedIds.has(previewProduct.id) : false}
         ownerAccess={ownerAccess}
+        watermarkId={getShortDeviceTag(deviceId)}
         inCart={previewProduct ? cartIds.has(previewProduct.id) : false}
         onClose={() => setPreviewProduct(null)}
         onAddToCart={handleAddToCart}

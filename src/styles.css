@@ -198,8 +198,17 @@
 /* Anti-piracy: never print protected previews / Vault files */
 @media print {
   .av-protected {
-    visibility: hidden !important;
+    display: none !important;
   }
+
+  body:has(.av-protected) {
+    display: none !important;
+  }
+}
+
+.av-protected {
+  -webkit-user-select: none;
+  user-select: none;
 }
  .av-app-shell {
   -webkit-user-select: none;

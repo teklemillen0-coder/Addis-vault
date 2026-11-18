@@ -24,9 +24,11 @@ import { UI_TRANSLATIONS } from '../i18n/translations';
 import { CvCountryId, CvCountryStandard, Language } from '../types';
 import { checkClientRateLimit, sanitizeUserInput } from '../utils/appSecurity';
 import { buildRealPdfBytes, triggerUint8Download } from '../utils/documentExport';
+import { ProtectedContent } from './ProtectedContent';
 
 interface CvBuilderViewProps {
   lang: Language;
+  watermarkId: string;
   unlockedCvCountryIds: Set<string>;
   vipActive: boolean;
   onRequestCheckout: (standard: CvCountryStandard) => void;
@@ -47,6 +49,7 @@ function triggerBlobDownload(filename: string, content: string, mimeType: string
 
 export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
   lang,
+  watermarkId,
   unlockedCvCountryIds,
   vipActive,
   onRequestCheckout,
@@ -738,16 +741,9 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
           </div>
 
           {/* Paper Sheet Preview (Watermarked & Copy-protected prior to unlock) */}
-          <div
-            onContextMenu={(e) => {
-              if (!isUnlocked) e.preventDefault();
-            }}
-            onCopy={(e) => {
-              if (!isUnlocked) e.preventDefault();
-            }}
-            className={`relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-6 sm:p-7 shadow-sm text-stone-900 ${
-              !isUnlocked ? 'select-none' : ''
-            }`}
+          <ProtectedContent
+            watermark={`Addis-Vault CV Preview · ${watermarkId}`}
+            className="overflow-hidden rounded-2xl border border-stone-200 bg-white p-6 text-stone-900 shadow-sm sm:p-7"
           >
             {!isUnlocked && (
               <div
@@ -868,7 +864,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
                 />
               </div>
             )}
-          </div>
+          </ProtectedContent>
 
           {/* Export / Checkout Gate */}
           <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-3 dark:border-zinc-800 dark:bg-zinc-900">
@@ -992,7 +988,10 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-            <div className="mx-auto max-w-3xl space-y-6">
+            <ProtectedContent
+              watermark={`Addis-Vault CV Preview · ${watermarkId}`}
+              className="mx-auto max-w-3xl space-y-6"
+            >
               {/* Sheet 1: CV */}
               <div
                 onContextMenu={(e) => {
@@ -1137,7 +1136,7 @@ export const CvBuilderView: React.FC<CvBuilderViewProps> = ({
                   {coverLetterDraft}
                 </div>
               </div>
-            </div>
+            </ProtectedContent>
           </div>
         </div>
       )}
