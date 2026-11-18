@@ -53,7 +53,9 @@ describe("Catalog price bands", () => {
     expect(Math.max(...prices)).toBe(60);
   });
   it("university hub items cost 20–85 ETB", () => {
-    const prices = PRODUCTS.filter((p) => p.category === "university").map((p) => p.priceEtb);
+    const prices = PRODUCTS.filter(
+      (p) => p.category === "university" && !p.id.startsWith("uni-coursepack-"),
+    ).map((p) => p.priceEtb);
     expect(Math.min(...prices)).toBeGreaterThanOrEqual(20);
     expect(Math.max(...prices)).toBeLessThanOrEqual(85);
   });

@@ -8,8 +8,10 @@ import { GENERATED_EXAMS, GENERATED_TEXTBOOKS, GENERATED_UNIVERSITY } from './ge
 import { GENERATED_LIBRARY } from './generatedLibrary';
 import { SPECIALIZED_VAULT_EXPANSION } from './specializedVaultExpansion';
 import { CATALOG_PRACTICAL_RESOURCES } from './catalogPracticalResources';
+import { GENERATED_UNIVERSITY_COURSE_OPTIONS } from './universityCourseOptions';
 
-export const HERO_IMAGE = '/__l5e/assets-v1/3aaf06a1-2f16-483f-a55a-b2c7a5b7d658/hero_marketplace_studio_1794711378120.jpg';
+export const HERO_IMAGE =
+  '/__l5e/assets-v1/3aaf06a1-2f16-483f-a55a-b2c7a5b7d658/hero_marketplace_studio_1794711378120.jpg';
 
 const textbookKey = (p: DigitalProduct) =>
   `${p.regionId}|${p.gradeBand}|${p.subject}|${p.bookRole}|${p.instructionLanguage}|${p.curriculumEdition || 'New Curriculum'}`;
@@ -25,7 +27,11 @@ function toUniversity(p: DigitalProduct): DigitalProduct {
     uniYear: p.uniYear || 'Freshman (1st Year)',
     department:
       p.department ||
-      (p.subject === 'Economics' ? 'Business' : p.subject === 'Physics' || p.subject === 'Math' ? 'Natural Sciences' : 'Engineering'),
+      (p.subject === 'Economics'
+        ? 'Business'
+        : p.subject === 'Physics' || p.subject === 'Math'
+          ? 'Natural Sciences'
+          : 'Engineering'),
     priceEtb: Math.min(85, Math.max(20, p.priceEtb)),
   };
 }
@@ -42,4 +48,6 @@ export const PRODUCTS: DigitalProduct[] = [
   ...SPECIALIZED_VAULT_EXPANSION,
   ...CATALOG_PRACTICAL_RESOURCES,
   ...CATALOG_LAW_ACADEMY,
-].map(toUniversity);
+]
+  .map(toUniversity)
+  .concat(GENERATED_UNIVERSITY_COURSE_OPTIONS);
