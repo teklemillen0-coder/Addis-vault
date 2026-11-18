@@ -7,6 +7,7 @@ import { CATALOG_SUPER_APP } from './catalogSuperApp';
 import { GENERATED_EXAMS, GENERATED_TEXTBOOKS, GENERATED_UNIVERSITY } from './generatedCatalog';
 import { GENERATED_LIBRARY } from './generatedLibrary';
 import { SPECIALIZED_VAULT_EXPANSION } from './specializedVaultExpansion';
+import { CATALOG_PRACTICAL_RESOURCES } from './catalogPracticalResources';
 
 export const HERO_IMAGE = '/__l5e/assets-v1/3aaf06a1-2f16-483f-a55a-b2c7a5b7d658/hero_marketplace_studio_1794711378120.jpg';
 
@@ -39,5 +40,6 @@ export const PRODUCTS: DigitalProduct[] = [
   ...CATALOG_SUPER_APP,
   ...GENERATED_LIBRARY,
   ...SPECIALIZED_VAULT_EXPANSION,
+  ...CATALOG_PRACTICAL_RESOURCES,
   ...CATALOG_LAW_ACADEMY,
 ].map(toUniversity);

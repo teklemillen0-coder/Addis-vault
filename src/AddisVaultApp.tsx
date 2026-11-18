@@ -32,7 +32,6 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { HERO_IMAGE } from "./data/products";
 import { useCatalog } from "./data/catalogStore";
 import { DEFAULT_AD_CONFIG } from "./constants/ads";
 import { getPromoDiscountPercent } from "./constants/payment";
@@ -2016,15 +2015,97 @@ export default function App() {
                   </div>
 
                   <div className="lg:col-span-5">
-                    <div className="relative h-56 sm:h-72 lg:h-full min-h-[240px] w-full overflow-hidden rounded-2xl border border-stone-200 bg-zinc-900 dark:border-zinc-800">
-                      <img
-                        src={HERO_IMAGE}
-                        alt={t.brandName}
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                      <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-100">
+                    <div className="relative h-56 min-h-[240px] w-full overflow-hidden rounded-2xl border border-stone-200 bg-zinc-950 sm:h-72 dark:border-zinc-800">
+                      <svg
+                        viewBox="0 0 640 420"
+                        role="img"
+                        aria-labelledby="hero-brand-title hero-brand-description"
+                        className="h-full w-full"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <title id="hero-brand-title">Addis-Vault digital library</title>
+                        <desc id="hero-brand-description">
+                          Addis-Vault brand card with an Ethiopian-inspired geometric emblem.
+                        </desc>
+                        <defs>
+                          <linearGradient id="hero-card-bg" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stopColor="#064e3b" />
+                            <stop offset="1" stopColor="#09090b" />
+                          </linearGradient>
+                          <linearGradient id="hero-card-line" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stopColor="#fbbf24" />
+                            <stop offset="1" stopColor="#34d399" />
+                          </linearGradient>
+                        </defs>
+                        <rect width="640" height="420" fill="url(#hero-card-bg)" />
+                        <circle cx="520" cy="85" r="155" fill="#10b981" opacity=".09" />
+                        <circle cx="85" cy="360" r="170" fill="#f59e0b" opacity=".07" />
+                        <path
+                          d="M320 45 510 210 320 375 130 210 320 45Z"
+                          fill="none"
+                          stroke="url(#hero-card-line)"
+                          strokeWidth="2"
+                          opacity=".45"
+                        />
+                        <path
+                          d="M320 82 468 210 320 338 172 210 320 82Z"
+                          fill="none"
+                          stroke="#a7f3d0"
+                          strokeWidth="1.5"
+                          opacity=".35"
+                        />
+                        <rect
+                          x="267"
+                          y="142"
+                          width="106"
+                          height="106"
+                          rx="22"
+                          fill="#065f46"
+                          stroke="#fbbf24"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M320 157 356 193 320 229 284 193 320 157Z"
+                          fill="none"
+                          stroke="#d1fae5"
+                          strokeWidth="4"
+                        />
+                        <circle cx="320" cy="193" r="8" fill="#fbbf24" />
+                        <text
+                          x="320"
+                          y="286"
+                          fill="#fff"
+                          fontFamily="system-ui, sans-serif"
+                          fontSize="30"
+                          fontWeight="700"
+                          textAnchor="middle"
+                        >
+                          Addis-Vault
+                        </text>
+                        <text
+                          x="320"
+                          y="316"
+                          fill="#a7f3d0"
+                          fontFamily="system-ui, sans-serif"
+                          fontSize="13"
+                          fontWeight="600"
+                          letterSpacing="3"
+                          textAnchor="middle"
+                        >
+                          ETHIOPIAN DIGITAL LIBRARY
+                        </text>
+                        <text
+                          x="320"
+                          y="354"
+                          fill="#fcd34d"
+                          fontFamily="system-ui, sans-serif"
+                          fontSize="12"
+                          textAnchor="middle"
+                        >
+                          150+ RESOURCES · LEARN · BUILD · GROW
+                        </text>
+                      </svg>
+                      <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-white/10 bg-black/55 px-3 py-2 text-[11px] text-stone-100 backdrop-blur-sm">
                         <span className="font-mono font-semibold text-amber-300">
                           Telebirr 0925695197
                         </span>
