@@ -13,6 +13,8 @@ jobs:
   build-apk:
     name: Build debug APK
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -28,6 +30,14 @@ jobs:
 
       - name: Build web app
         run: npm run build
+
+      - name: Prepare local SPA entry point
+        run: |
+          test -s .output/public/_shell.html
+          test -d .output/public/assets
+          test -n "$(find .output/public/assets -type f -print -quit)"
+          cp .output/public/_shell.html .output/public/index.html
+          test -s .output/public/index.html
 
       - name: Copy web assets to Android
         run: npx cap copy android
