@@ -15,6 +15,7 @@ interface SecureVaultReaderModalProps {
   token: VaultAccessToken | null;
   lang: Language;
   initialLang?: Language;
+  ownerAccess?: boolean;
   onClose: () => void;
   onRenewSession: (product: DigitalProduct) => void;
 }
@@ -32,6 +33,7 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
   token,
   lang,
   initialLang,
+  ownerAccess = false,
   onClose,
   onRenewSession,
 }) => {
@@ -276,16 +278,15 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
 
                 <div className="border-t border-stone-200 pt-5 dark:border-zinc-800">
                   <h4 className="font-display text-sm font-bold text-stone-900 dark:text-stone-100">
-                    2. Complete Licensed Edition Notes &amp; Answer Explanations
+                    2. Available Study Preview
                   </h4>
                   <div className="mt-3 space-y-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
                     <p>{product.sampleExcerpt[contentLang]}</p>
-                    <p>
-                      Licensed Edition Summary ({product.sku}): Structured for offline reading on
-                      Ethiopian mobile and desktop devices. Every unit concludes with step-by-step
-                      worked examples, key terminology, and verified self-check review questions for
-                      rapid mastery.
-                    </p>
+                    {product.videoChapters?.length ? (
+                      <ol className="list-decimal space-y-1 pl-5">
+                        {product.videoChapters.map((chapter) => <li key={chapter}>{chapter}</li>)}
+                      </ol>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -325,12 +326,9 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
                   setDownloadingVault(true);
                   try {
                     const res = await getVaultFileUrl({ data: { id: product.id } });
-                    if (res?.url) {
+                    if (res?.url && res.isPdf) {
                       const a = document.createElement('a');
                       a.href = res.url;
-                      a.target = '_blank';
-                      a.rel = 'noopener noreferrer';
-                      a.download = `${product.sku}`;
                       document.body.appendChild(a);
                       a.click();
                       document.body.removeChild(a);
@@ -342,7 +340,12 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
                     setDownloadingVault(false);
                   }
                 }
-                downloadProductFile(product, 'full', contentLang);
+                await downloadProductFile(
+                  product,
+                  'full',
+                  contentLang,
+                  ownerAccess || order?.watermarkRemoval ? null : watermarkString,
+                );
               }}
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
             >

@@ -114,17 +114,29 @@ export const deleteCatalogItem = createServerFn({ method: "POST" })
 // Unlocking follows the app's Telebirr/CBE reference flow, which is confirmed in the browser.
 export const getVaultFileUrl = createServerFn({ method: "POST" })
   .validator((input: { id: string }) => z.object({ id: z.string().min(1).max(160) }).parse(input))
-  .handler(async ({ data }): Promise<{ url: string | null }> => {
+  .handler(async ({ data }): Promise<{ url: string | null; isPdf: boolean }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("catalog_items")
       .select("file_path, link_url")
       .eq("id", data.id)
       .maybeSingle();
-    if (!row) return { url: null };
+    if (!row) return { url: null, isPdf: false };
     if (row.file_path) {
-      const { data: signed } = await supabaseAdmin.storage.from("vault-files").createSignedUrl(row.file_path, 600);
-      return { url: signed?.signedUrl ?? null };
+      const isPdf = row.file_path.toLowerCase().split("?")[0].endsWith(".pdf");
+      const { data: signed } = await supabaseAdmin.storage.from("vault-files").createSignedUrl(
+        row.file_path,
+        600,
+        isPdf ? { download: true } : undefined,
+      );
+      return { url: signed?.signedUrl ?? null, isPdf };
     }
-    return { url: row.link_url || null };
+    const isPdf = Boolean(row.link_url && (() => {
+      try {
+        return new URL(row.link_url).pathname.toLowerCase().endsWith(".pdf");
+      } catch {
+        return false;
+      }
+    })());
+    return { url: row.link_url || null, isPdf };
   });

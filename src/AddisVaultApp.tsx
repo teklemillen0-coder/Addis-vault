@@ -3073,7 +3073,9 @@ export default function App() {
         onClose={() => setPreviewProduct(null)}
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNowWithSnapshot}
-        onDownloadSample={(prod, contentLang) => downloadProductFile(prod, "sample", contentLang)}
+        onDownloadSample={(prod, contentLang) =>
+          downloadProductFile(prod, "sample", contentLang, ownerAccess ? null : undefined)
+        }
         onDownloadFull={(prod, contentLang) => handleOpenInVault(prod, undefined, contentLang)}
       />
 
@@ -3188,6 +3190,7 @@ export default function App() {
         token={activeVaultSession?.token || null}
         lang={lang}
         initialLang={activeVaultSession?.initialLang}
+        ownerAccess={ownerAccess}
         onClose={() => setActiveVaultSession(null)}
         onRenewSession={(prod) =>
           handleOpenInVault(prod, undefined, activeVaultSession?.initialLang)
