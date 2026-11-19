@@ -59,13 +59,26 @@ export const saveCatalogItem = createServerFn({ method: "POST" })
       .maybeSingle();
     const filePath = data.filePath ?? existing?.file_path ?? "";
     const linkUrl = data.linkUrl !== undefined ? link : existing?.link_url ?? "";
+    const hasPdf = Boolean(
+      (filePath && filePath.toLowerCase().split("?")[0].endsWith(".pdf")) ||
+      (linkUrl && (() => {
+        try { return new URL(linkUrl).pathname.toLowerCase().endsWith(".pdf"); }
+        catch { return false; }
+      })())
+    );
     // Editing an owner-added item keeps it an "add" row.
     const action = existing?.action === "add" ? "add" : data.action;
     const { error } = await supabaseAdmin.from("catalog_items").upsert({
       id: data.id,
       action,
       category: data.category,
-      payload: { ...data.payload, hasFile: Boolean(filePath), hasLink: Boolean(linkUrl) },
+      payload: {
+        ...data.payload,
+        hasFile: Boolean(filePath),
+        hasLink: Boolean(linkUrl),
+        hasPdf,
+        ...(linkUrl ? { sourcePdfUrl: hasPdf ? linkUrl : "" } : {}),
+      },
       file_path: filePath,
       link_url: linkUrl,
       updated_at: new Date().toISOString(),

@@ -52,7 +52,9 @@ export function applyCatalogChanges(rows: CatalogChangeRow[]) {
   const added: DigitalProduct[] = [];
   ownerFileIds = new Set();
   for (const row of rows) {
-    if (row.payload?.hasFile || row.payload?.hasLink) ownerFileIds.add(row.id);
+    const pdfUrl = typeof row.payload?.sourcePdfUrl === 'string' ? row.payload.sourcePdfUrl : '';
+    const looksPdf = Boolean(pdfUrl && new URL(pdfUrl, 'https://addis-vault.local').pathname.toLowerCase().endsWith('.pdf'));
+    if (row.payload?.hasPdf || looksPdf) ownerFileIds.add(row.id);
     if (row.action === 'delete') deleted.add(row.id);
     else if (row.action === 'edit') edits.set(row.id, row.payload || {});
     else added.push(normalizeAdded(row));
@@ -79,6 +81,16 @@ export function getCatalogItem(id: string): DigitalProduct | undefined {
 /** True when the owner attached a real uploaded file or link to this item. */
 export function hasOwnerFile(id: string): boolean {
   return ownerFileIds.has(id);
+}
+
+export function isRealPdfAvailable(product: DigitalProduct): boolean {
+  if (hasOwnerFile(product.id)) return true;
+  if (!product.sourcePdfUrl) return false;
+  try {
+    return new URL(product.sourcePdfUrl).pathname.toLowerCase().endsWith('.pdf');
+  } catch {
+    return false;
+  }
 }
 
 export function useCatalog(): DigitalProduct[] {

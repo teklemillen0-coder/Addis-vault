@@ -34,6 +34,7 @@ import { UI_TRANSLATIONS } from '../i18n/translations';
 import { downloadSalesCsv } from '../utils/fileGenerator';
 import { sanitizeUserInput } from '../utils/appSecurity';
 import { AdManagerPanel } from './AdManagerPanel';
+import { OwnerPdfManager } from './OwnerPdfManager';
 
 interface OwnerDashboardViewProps {
   lang: Language;
@@ -91,7 +92,7 @@ export const OwnerDashboardView: React.FC<OwnerDashboardViewProps> = ({
   onOpenSignIn,
 }) => {
   const t = UI_TRANSLATIONS[lang];
-  const [subTab, setSubTab] = useState<'sales' | 'ads' | 'expediter' | 'consults' | 'directory' | 'owner_profile'>('sales');
+  const [subTab, setSubTab] = useState<'sales' | 'pdfs' | 'ads' | 'expediter' | 'consults' | 'directory' | 'owner_profile'>('sales');
   const [directoryListings, setDirectoryListings] = useState<OwnerListing[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(false);
 
@@ -226,6 +227,20 @@ export const OwnerDashboardView: React.FC<OwnerDashboardViewProps> = ({
             <button
               type="button"
               role="tab"
+              aria-selected={subTab === 'pdfs'}
+              onClick={() => setSubTab('pdfs')}
+              className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                subTab === 'pdfs'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
+              }`}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span>PDF Manager</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={subTab === 'ads'}
               onClick={() => setSubTab('ads')}
               className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
@@ -315,7 +330,9 @@ export const OwnerDashboardView: React.FC<OwnerDashboardViewProps> = ({
         <span>Signed in as store owner</span>
       </div>
 
-      {subTab === 'ads' ? (
+      {subTab === 'pdfs' ? (
+        <OwnerPdfManager />
+      ) : subTab === 'ads' ? (
         <AdManagerPanel
           lang={lang}
           adConfig={adConfig}

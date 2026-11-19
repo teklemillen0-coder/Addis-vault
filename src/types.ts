@@ -146,6 +146,8 @@ export interface DigitalProduct {
   format: string;
   fileSize: string;
   fileExtension: string;
+  /** Verified direct PDF source; summary URLs and non-PDF files never qualify. */
+  sourcePdfUrl?: string;
   coverImage: string;
   accentPattern: 'diamond' | 'lattice' | 'horizon' | 'prism' | 'weave' | 'arch';
   gradeBand?: GradeBand;

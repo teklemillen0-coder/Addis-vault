@@ -29,7 +29,7 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { useCatalog } from "./data/catalogStore";
+import { isRealPdfAvailable, useCatalog } from "./data/catalogStore";
 import { DEFAULT_AD_CONFIG } from "./constants/ads";
 import { getPromoDiscountPercent, WATERMARK_REMOVAL_FEE_ETB } from "./constants/payment";
 import { OWNER_SUPPORT_CONTACTS } from "./constants/support";
@@ -74,7 +74,6 @@ import {
   VipSubscription,
   WorkerProfile,
 } from "./types";
-import { downloadProductFile } from "./utils/fileGenerator";
 import {
   computeIntegritySig,
   readEncryptedStorage,
@@ -984,6 +983,7 @@ export default function App() {
 
   const handleOpenInVault = useCallback(
     (product: DigitalProduct, explicitOrder?: PurchaseOrder | null, initialLang?: Language) => {
+      if (!isRealPdfAvailable(product)) return;
       const matchedOrder =
         explicitOrder !== undefined
           ? explicitOrder
@@ -1185,6 +1185,8 @@ export default function App() {
   const totalEtb = Math.max(0, subtotalEtb - discountEtb);
 
   const handleAddToCart = (productId: string) => {
+    const product = productsById[productId];
+    if (!product || !isRealPdfAvailable(product)) return;
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === productId);
       if (existing) {
@@ -1863,7 +1865,7 @@ export default function App() {
 
   const handleBuyNowWithSnapshot = (productId: string) => {
     const product = productsById[productId];
-    if (!product) return;
+    if (!product || !isRealPdfAvailable(product)) return;
     const nextCart = cart.some((c) => c.productId === productId)
       ? cart
       : [...cart, { productId, quantity: 1 }];
@@ -3073,9 +3075,7 @@ export default function App() {
         onClose={() => setPreviewProduct(null)}
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNowWithSnapshot}
-        onDownloadSample={(prod, contentLang) =>
-          downloadProductFile(prod, "sample", contentLang, ownerAccess ? null : undefined)
-        }
+        onDownloadSample={(_prod, _contentLang) => undefined}
         onDownloadFull={(prod, contentLang) => handleOpenInVault(prod, undefined, contentLang)}
       />
 

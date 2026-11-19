@@ -3,8 +3,7 @@ import { Clock, Download, Loader2, Lock, ShieldCheck, Smartphone, X } from 'luci
 import { DigitalProduct, Language, PurchaseOrder, VaultAccessToken } from '../types';
 import { LANGUAGE_OPTIONS, UI_TRANSLATIONS } from '../i18n/translations';
 import { getOrCreateDeviceId, getShortDeviceTag } from '../utils/vaultSecurity';
-import { downloadProductFile } from '../utils/fileGenerator';
-import { hasOwnerFile } from '../data/catalogStore';
+import { hasOwnerFile, isRealPdfAvailable } from '../data/catalogStore';
 import { getVaultFileUrl } from '@/lib/catalog.functions';
 import { VideoPreviewPlayer } from './VideoPreviewPlayer';
 import { ProtectedContent } from './ProtectedContent';
@@ -320,7 +319,7 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
             </label>
             <button
               type="button"
-              disabled={isExpired || downloadingVault}
+              disabled={isExpired || downloadingVault || !isRealPdfAvailable(product)}
               onClick={async () => {
                 if (hasOwnerFile(product.id)) {
                   setDownloadingVault(true);
@@ -340,12 +339,7 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
                     setDownloadingVault(false);
                   }
                 }
-                await downloadProductFile(
-                  product,
-                  'full',
-                  contentLang,
-                  ownerAccess || order?.watermarkRemoval ? null : watermarkString,
-                );
+                // Summary/preview PDF generation is disabled. Without an exact uploaded PDF, do nothing.
               }}
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
             >
@@ -355,8 +349,9 @@ export const SecureVaultReaderModal: React.FC<SecureVaultReaderModalProps> = ({
                 <Download className="h-3.5 w-3.5" />
               )}
               <span>
-                {lang === 'am' ? 'በመረጡት ቋንቋ ያውርዱ' : 'Download in my language'} (
-                {LANGUAGE_OPTIONS.find((o) => o.code === contentLang)?.nativeName})
+                {!isRealPdfAvailable(product)
+                  ? 'PDF Uploading Soon'
+                  : `${lang === 'am' ? 'በመረጡት ቋንቋ ያውርዱ' : 'Download in my language'} (${LANGUAGE_OPTIONS.find((o) => o.code === contentLang)?.nativeName})`}
               </span>
             </button>
           </div>

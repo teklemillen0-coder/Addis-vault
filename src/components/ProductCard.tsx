@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, Eye, Pencil, ShieldCheck, ShoppingBag, Trash2, Video } from 'lucide-react';
 import { DigitalProduct, Language } from '../types';
 import { REGION_NAME_BY_ID } from '../constants/educationRegions';
+import { isRealPdfAvailable } from '../data/catalogStore';
 import { UI_TRANSLATIONS } from '../i18n/translations';
 
 interface ProductCardProps {
@@ -213,6 +214,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
 
+          {isRealPdfAvailable(product) ? (
           <div className="mt-3 grid grid-cols-2 gap-2.5">
             <button
               type="button"
@@ -251,6 +253,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </button>
             )}
           </div>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="mt-3 min-h-[42px] w-full rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+            >
+              PDF Uploading Soon
+            </button>
+          )}
 
           {ownerMode && (onEdit || onDelete) && (
             <div className="mt-2.5 flex items-center justify-end gap-1.5 border-t border-dashed border-amber-400/60 pt-2.5">

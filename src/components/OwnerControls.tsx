@@ -129,6 +129,11 @@ export const OwnerItemEditor: React.FC<EditorProps> = ({ lang, open, item, defau
       const id = item?.id || `own-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       let filePath: string | undefined;
       if (file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+          setError('Only real PDF files are accepted / ትክክለኛ PDF ብቻ ይፈቀዳል');
+          setBusy(false);
+          return;
+        }
         const safeName = file.name.replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
         filePath = `${id}/${Date.now()}-${safeName}`;
         const { error: upErr } = await supabase.storage.from('vault-files').upload(filePath, file, { upsert: true });
@@ -139,6 +144,20 @@ export const OwnerItemEditor: React.FC<EditorProps> = ({ lang, open, item, defau
       const descEn = form.descEn.trim() || titleEn;
       const descAm = form.descAm.trim() || descEn;
       const opt = (v: string) => (v.trim() ? v.trim() : undefined);
+      if (form.linkUrl.trim()) {
+        try {
+          const url = new URL(form.linkUrl.trim());
+          if (url.protocol !== 'https:' || !url.pathname.toLowerCase().endsWith('.pdf')) {
+            setError('Only direct HTTPS .pdf URLs are accepted');
+            setBusy(false);
+            return;
+          }
+        } catch {
+          setError('Only direct HTTPS .pdf URLs are accepted');
+          setBusy(false);
+          return;
+        }
+      }
       const res = await saveCatalogItem({
         data: {
           id,
@@ -263,13 +282,13 @@ export const OwnerItemEditor: React.FC<EditorProps> = ({ lang, open, item, defau
             <span>Video course / የቪዲዮ ትምህርት</span>
           </label>
           <label className="block">
-            Upload file (PDF, Word, MP4…) / ፋይል ይጫኑ
+            Upload full PDF only / ሙሉ PDF ብቻ ይጫኑ
             <span className="mt-1 flex items-center gap-2 rounded-lg border border-dashed border-stone-300 p-3 dark:border-zinc-700">
               <Upload className="h-4 w-4" />
-              <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="text-xs" />
+              <input type="file" accept="application/pdf,.pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="text-xs" />
             </span>
           </label>
-          <label className="block">Or paste a link (https://…) / ሊንክ ይለጥፉ<input className={field} value={form.linkUrl} onChange={(e) => set('linkUrl', e.target.value.slice(0, 900))} /></label>
+          <label className="block">Or paste a direct HTTPS full-PDF URL / የሙሉ PDF ሊንክ ይለጥፉ<input className={field} value={form.linkUrl} onChange={(e) => set('linkUrl', e.target.value.slice(0, 900))} /></label>
           {error && <p className="text-rose-600 dark:text-rose-400">{error}</p>}
         </div>
         <div className="flex justify-end gap-2 border-t border-stone-200 px-5 py-3.5 dark:border-zinc-800">
